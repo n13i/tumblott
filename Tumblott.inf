@@ -1,0 +1,46 @@
+[Version]
+Signature = "$Windows NT$"
+Provider = "m2hq.net"
+CESignature = "$Windows CE$"
+
+[CEStrings]
+AppName = "Tumblott"
+InstallDir = "%CE1%\%AppName%"
+
+[Strings]
+Manufacturer = "m2hq.net"
+
+[CEDevice]
+VersionMin = 4.0
+VersionMax = 5.99
+BuildMax = 0xE0000000
+
+[DefaultInstall]
+CopyFiles = Files.Common,Files.ResJaJP
+CEShortcuts = Shortcuts
+AddReg = RegSettings
+
+[SourceDisksNames]
+1 = ,"Common files",,"Tumblott\bin\Release"
+2 = ,"Resource files (ja-JP)",,"Tumblott\bin\Release\ja-JP"
+
+[SourceDisksFiles]
+"%AppName%.exe" = 1
+"%AppName%.resources.dll" = 2
+
+[DestinationDirs]
+Files.Common = 0,"%InstallDir%"
+Files.ResJaJP = 0,"%InstallDir%\ja-JP"
+Shortcuts = 0,"%CE11%"
+
+[Files.Common]
+"%AppName%.exe",,,0
+
+[Files.ResJaJP]
+"%AppName%.resources.dll",,,0
+
+[Shortcuts]
+"%AppName%",0,"%AppName%.exe"
+
+[RegSettings]
+
