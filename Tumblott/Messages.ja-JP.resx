@@ -202,4 +202,13 @@
   <data name="SettingsWindowTitle" xml:space="preserve">
     <value>設定</value>
   </data>
+  <data name="AppliedAfterRestart" xml:space="preserve">
+    <value>以下の変更は再起動後に反映されます。</value>
+  </data>
+  <data name="ShowMenuBar" xml:space="preserve">
+    <value>メニューバーを表示する</value>
+  </data>
+  <data name="ThumbnailImageSize" xml:space="preserve">
+    <value>サムネイル画像サイズ</value>
+  </data>
 </root>

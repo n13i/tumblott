@@ -61,8 +61,23 @@ namespace Tumblott
             // ------------------------------------------------------------------ [General] page
             this.openLinkCheckBox.Checked = Settings.IsConfirmWhenOpenLinks;
 
+            int[] sizes = { 75, 100, 250, 400, 500, 1280 };
+            foreach (int n in sizes)
+            {
+                int idx = this.thumbImageSizeComboBox.Items.Add(n);
+                if ((int)Settings.ThumbnailImageSize == n)
+                {
+                    this.thumbImageSizeComboBox.SelectedIndex = idx;
+                }
+            }
+
+            this.showMenuBarCheckBox.Checked = Settings.ShowMenuBar;
+
             // Translations
             this.openLinkCheckBox.Text = Messages.OpenLinkConfirm;
+            this.thumbImageSizeLabel.Text = Messages.ThumbnailImageSize;
+            this.appliedAfterRestartLabel.Text = Messages.AppliedAfterRestart;
+            this.showMenuBarCheckBox.Text = Messages.ShowMenuBar;
 
             // ------------------------------------------------------------------ [Network] page
             switch (Settings.Proxy)
@@ -99,6 +114,9 @@ namespace Tumblott
             this.proxyUsernameLabel.Text = Messages.Username;
             this.proxyPasswordLabel.Text = Messages.Password;
             this.proxyOnlyImagesCheckBox.Text = Messages.ProxyOnlyImages;
+
+            // ------------------------------------------------------------------ [About] page
+            this.debugCheckBox.Checked = Settings.DebugLog;
         }
 
         private void useProxyRadioButton_CheckedChanged(object sender, EventArgs e)
@@ -120,11 +138,39 @@ namespace Tumblott
             {
                 // タスクバーの [OK] で閉じるとき / ソフトキーの OK で閉じるとき
 
+                // ------------------------------------------------------------------ [Account] page
                 Settings.Email = this.emailTextBox.Text;
                 Settings.Password = this.passwordTextBox.Text;
 
+                // ------------------------------------------------------------------ [General] page
                 Settings.IsConfirmWhenOpenLinks = this.openLinkCheckBox.Checked;
 
+                int idx = this.thumbImageSizeComboBox.SelectedIndex;
+                switch ((int)this.thumbImageSizeComboBox.Items[idx])
+                {
+                    case 75:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size75;
+                        break;
+                    case 100:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size100;
+                        break;
+                    case 250:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size250;
+                        break;
+                    case 400:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size400;
+                        break;
+                    case 500:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size500;
+                        break;
+                    case 1280:
+                        Settings.ThumbnailImageSize = Settings.ImageSize.Size1280;
+                        break;
+                }
+
+                Settings.ShowMenuBar = this.showMenuBarCheckBox.Checked;
+
+                // ------------------------------------------------------------------ [Network] page
                 if (this.useDefaultRadioButton.Checked)
                 {
                     Settings.Proxy = Settings.ProxyMode.Default;
@@ -142,6 +188,9 @@ namespace Tumblott
                 Settings.ProxyPort = int.Parse(this.proxyPortTextBox.Text);
                 Settings.ProxyUsername = this.proxyUsernameTextBox.Text;
                 Settings.ProxyPassword = this.proxyPasswordTextBox.Text;
+
+                // ------------------------------------------------------------------ [About] page
+                Settings.DebugLog = this.debugCheckBox.Checked;
 
                 Settings.Save();
             }
@@ -161,6 +210,18 @@ namespace Tumblott
         private void debugButton_Click(object sender, EventArgs e)
         {
             MessageBox.Show(Settings.AppDataPath);
+        }
+
+        private void licenseLinkLabel_Click(object sender, EventArgs e)
+        {
+            //MessageBox.Show(global::Tumblott.Properties.Resources.license);
+            LicenseForm licenseForm = new LicenseForm();
+            licenseForm.ShowDialog();
+        }
+
+        private void webLinkLabel_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://tumblott.m2hq.net/", null);
         }
     }
 }

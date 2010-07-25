@@ -145,11 +145,20 @@
   <data name="frame_bottom_right" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\frame_bottom_right.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="frame_shadow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\frame_shadow.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="frame_top_left" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\frame_top_left.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="frame_top_right" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\frame_top_right.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="image_loading" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\image_loading.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="license" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\license.txt;System.String, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;shift_jis</value>
   </data>
   <data name="loading_b0" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\loading_b0.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

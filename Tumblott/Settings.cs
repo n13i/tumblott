@@ -13,7 +13,8 @@ namespace Tumblott
         private static readonly Settings instance = new Settings();
 
         public enum ProxyMode { NoUse = 0, Use, Default };
-
+        public enum ImageSize { Size75 = 75, Size100 = 100, Size250 = 250, Size400 = 400, Size500 = 500, Size1280 = 1280 };
+    
         public static string Email
         {
             get { return GetValue("email"); }
@@ -94,6 +95,29 @@ namespace Tumblott
         {
             get { return (GetValue("debuglog") == "1"); }
             set { instance["debuglog"] = (value ? "1" : "0"); }
+        }
+        public static bool ConnectionConfirmed
+        {
+            get { return (GetValue("connectionconfirmed") == "1"); }
+            set { instance["connectionconfirmed"] = (value ? "1" : "0"); }
+        }
+        public static ImageSize ThumbnailImageSize
+        {
+            get
+            {
+                return (GetValue("thumbnailimagesize") == "75" ? ImageSize.Size75 :
+                        GetValue("thumbnailimagesize") == "100" ? ImageSize.Size100 :
+                        GetValue("thumbnailimagesize") == "250" ? ImageSize.Size250 :
+                        GetValue("thumbnailimagesize") == "400" ? ImageSize.Size400 :
+                        GetValue("thumbnailimagesize") == "500" ? ImageSize.Size500 :
+                                                                   ImageSize.Size250);
+            }
+            set { instance["thumbnailimagesize"] = ((int)value).ToString(); }
+        }
+        public static bool ShowMenuBar
+        {
+            get { return (GetValue("showmenubar") == "1"); }
+            set { instance["showmenubar"] = (value ? "1" : "0"); }
         }
 
         public static string AppDataPath
@@ -189,6 +213,9 @@ namespace Tumblott
             Settings.ProxyUsername = null;
             Settings.ProxyPassword = null;
             Settings.DebugLog = false;
+            Settings.ConnectionConfirmed = false;
+            Settings.ThumbnailImageSize = ImageSize.Size250;
+            Settings.ShowMenuBar = true;
 
             Utils.ReadLine(Settings.FilePath, line =>
             {

@@ -8,6 +8,11 @@ using System.Windows.Forms;
 
 namespace Tumblott
 {
+    /*
+     * priority
+     * timeout
+     * notification用途にも使えるようにしたい
+     */
     public partial class ProgressStatusBar : UserControl, IDisposable
     {
         private string text;

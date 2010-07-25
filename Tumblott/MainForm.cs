@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Windows.Forms;
 using System.IO;
+using System.Drawing;
+using System.Windows.Forms;
 using Tumblott.Client.Tumblr;
 using Tumblott.Forms;
 
@@ -31,6 +32,8 @@ namespace Tumblott
             //webBrowser1.MouseDown += new MouseEventHandler(webBrowser1_MouseDown);
             // メニューの作成
             this.Menu = new MainMenu();
+            this.ContextMenu = new ContextMenu();
+
             miRightSoftKey = new MenuItem { Text = Messages.Menu };
 
             MenuItem miReload = new MenuItem { Text = "Load dashboard" };
@@ -64,24 +67,50 @@ namespace Tumblott
             MenuItem miLandscape = new MenuItem { Text = "Landscape" };
             miLandscape.Click += new EventHandler(miLandscape_Click);
             miDebug.MenuItems.Add(miLandscape);
-            
+
+            MenuItem miDialogTest = new MenuItem { Text = "DialogBox" };
+            miDialogTest.Click += new EventHandler(miDialogTest_Click);
+            miDebug.MenuItems.Add(miDialogTest);
+
             //MenuItem miRegExTest = new MenuItem { Text = "RegEx" };
             //miRegExTest.Click += new EventHandler(miRegExTest_Click);
             //miDebug.MenuItems.Add(miRegExTest);
 
-            miRightSoftKey.MenuItems.Add(miReload);
+            Menu.MenuItemCollection miTarget;
+            if (Settings.ShowMenuBar)
+            {
+                miTarget = miRightSoftKey.MenuItems;
+            }
+            else
+            {
+                miTarget = this.ContextMenu.MenuItems;
+            }
+
+            miTarget.Add(miReload);
             if (Settings.DebugLog)
             {
-                miRightSoftKey.MenuItems.Add(miDebug);
+                miTarget.Add(miDebug);
             }
-            miRightSoftKey.MenuItems.Add(miSettings);
-            miRightSoftKey.MenuItems.Add(miExit);
+            miTarget.Add(new MenuItem { Text = "-" });
+            miTarget.Add(miSettings);
+            miTarget.Add(new MenuItem { Text = "-" });
+            miTarget.Add(miExit);
 
             miLeftSoftKey = new MenuItem { Text = Messages.Show };
             miLeftSoftKey.Click += new EventHandler(miShowPic_Click);
 
-            Menu.MenuItems.Add(miLeftSoftKey);
-            Menu.MenuItems.Add(miRightSoftKey);
+            if (Settings.ShowMenuBar)
+            {
+                this.Menu.MenuItems.Add(miLeftSoftKey);
+                this.Menu.MenuItems.Add(miRightSoftKey);
+            }
+            else
+            {
+                this.Menu = null;
+                this.statusPanel.Click += new EventHandler(statusPanel_Click);
+                this.ContextMenu.Popup += new EventHandler(ContextMenu_Popup);
+//                this.ContextMenu.Show(this, 
+            }
 
             SetMenu(false);
 
@@ -107,12 +136,31 @@ namespace Tumblott
             statusPanel.Text = "0/0";
 
             TumblrPost post = new TumblrPost();
-            post.Html = "<div>重そうで<br/>重くない<br/>少し重い<br/>Tumblrクライアント<br/><br/><b>ご注意</b><br/><br/>これはスナップショットバージョンであり，非常に不安定です。<br/>メニューから[Load dashboard]を選択すると，ダッシュボードを表示します。</div>";
+            post.Html = "<div><b>ご注意</b><br/><br/>これはスナップショットバージョンであり，非常に不安定です。<br/>メニューから[Load dashboard]を選択すると，ダッシュボードを表示します。</div>";
             post.AvatarImage = global::Tumblott.Properties.Resources.tumblott_icon;
             // FIXME Infoの中身をPostViewに直接表示させたい
             //post.Info = "Welcome to Tumblott";
-            postView.Text = "Tumblott\nVersion " + Utils.GetExecutingAssemblyVersion() + " (" + Utils.GetBuiltDateTime().ToString("yyyy/MM/dd") + ")";
+            postView.Title = "Tumblott";
+            postView.Text = "Version " + Utils.GetExecutingAssemblyVersion() + " (" + Utils.GetBuiltDateTime().ToString("yyyy/MM/dd") + ")";
             postView.Post = post;
+        }
+
+        void statusPanel_Click(object sender, EventArgs e)
+        {
+            this.ContextMenu.Show((Control)sender, new Point(0, 0));
+        }
+
+        void ContextMenu_Popup(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        void miDialogTest_Click(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
+            DialogBox dlg = new DialogBox();
+            dlg.Location = new Point((Screen.PrimaryScreen.Bounds.Width - dlg.Width) / 2, (Screen.PrimaryScreen.Bounds.Height - dlg.Height) / 2);
+            dlg.ShowDialog();
         }
 
         void miPortrait_Click(object sender, EventArgs e)
@@ -253,9 +301,9 @@ namespace Tumblott
                 start = this.posts.Count - 1;
             }
 
-            posts.FetchDashboard(start,
+            this.posts.FetchDashboard(start,
                 per => { this.BeginInvoke(new Action<int>(UpdateProgressBar), per); },
-                ps => { this.BeginInvoke(new Action<TumblrPosts>(FetchDashboardCompleted), ps); }
+                ps => { this.BeginInvoke(new Action<TumblrResult>(FetchDashboardCompleted), ps); }
             );
         }
 
@@ -269,17 +317,25 @@ namespace Tumblott
             }
         }
 
-        private void FetchDashboardCompleted(TumblrPosts posts)
+        private void FetchDashboardCompleted(TumblrResult r)
         {
-            if (posts == null)
+            if (r != null)
             {
                 // 受信失敗？
                 progressStatusBar.Value = 0;
                 progressStatusBar.Visible = false;
+
+                Utils.DebugLog("FetchDashboardCompleted: " + r.Text);
+
+                DialogResult dr = MessageBox.Show("Failed to load dashboard.", "Load Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                if (dr == DialogResult.Retry)
+                {
+                    FetchDashboard(null);
+                }
                 return;
             }
 
-            foreach (TumblrPost p in posts)
+            foreach (TumblrPost p in this.posts)
             {
                 if (true)
                 {
@@ -300,7 +356,8 @@ namespace Tumblott
                         });
                 }
             }
-            this.BeginInvoke(new Action<TumblrPosts>(UpdatePosts), posts);
+            //this.BeginInvoke(new Action<TumblrPosts>(UpdatePosts), this.posts);
+            UpdatePosts(this.posts);
 
             progressStatusBar.Value = 0;
             progressStatusBar.Visible = false;
@@ -323,6 +380,7 @@ namespace Tumblott
 
         private void UpdatePosts(TumblrPosts ps)
         {
+            postView.ResetPosition();
             UpdateStatus();
             UpdateView();
         }
@@ -399,7 +457,16 @@ namespace Tumblott
         private void UpdateView()
         {
             postView.Post = posts[currentView];
-            postView.Text = posts[currentView].Info;
+            postView.Title = posts[currentView].Tumblelog;
+            if (posts[currentView].RebloggedFrom != null)
+            {
+                postView.Text = "reblogged " + posts[currentView].RebloggedFrom;
+            }
+            else
+            {
+                postView.Text = null;
+            }
+
             UpdateStatus();
             if (posts[currentView].Type == TumblrPost.Types.Photo)
             {
@@ -518,6 +585,21 @@ namespace Tumblott
                 this.TopMost = false;
             }
             */
+        }
+
+        private void postView_FlipRequested(object sender, MouseEventArgs e)
+        {
+            switch (e.X)
+            {
+                case -1:
+                    prevButton_Click(sender, e);
+                    break;
+                case 1:
+                    nextButton_Click(sender, e);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

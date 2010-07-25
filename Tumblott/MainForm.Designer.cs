@@ -30,14 +30,14 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.buttonsPanel = new System.Windows.Forms.UserControl();
+            this.progressStatusBar = new Tumblott.ProgressStatusBar();
+            this.postView = new Tumblott.Forms.PostView();
             this.nextButton = new Tumblott.Forms.ImageButton();
             this.reblogButton = new Tumblott.Forms.ImageButton();
             this.statusPanel = new Tumblott.Forms.StatusPanel();
             this.loadingIndicator = new Tumblott.Forms.LoadingIndicator();
             this.likeButton = new Tumblott.Forms.ImageButton();
             this.prevButton = new Tumblott.Forms.ImageButton();
-            this.progressStatusBar = new Tumblott.ProgressStatusBar();
-            this.postView = new Tumblott.Forms.PostView();
             this.buttonsPanel.SuspendLayout();
             this.statusPanel.SuspendLayout();
             this.SuspendLayout();
@@ -54,6 +54,30 @@
             this.buttonsPanel.Name = "buttonsPanel";
             this.buttonsPanel.Size = new System.Drawing.Size(240, 32);
             this.buttonsPanel.TabIndex = 4;
+            // 
+            // progressStatusBar
+            // 
+            this.progressStatusBar.BackColor = System.Drawing.Color.Black;
+            this.progressStatusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.progressStatusBar.ForeColor = System.Drawing.Color.Gainsboro;
+            this.progressStatusBar.Location = new System.Drawing.Point(0, 220);
+            this.progressStatusBar.Name = "progressStatusBar";
+            this.progressStatusBar.ProgressColor = System.Drawing.Color.SteelBlue;
+            this.progressStatusBar.Size = new System.Drawing.Size(240, 16);
+            this.progressStatusBar.TabIndex = 9;
+            // 
+            // postView
+            // 
+            this.postView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.postView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.postView.HideHeader = false;
+            this.postView.Location = new System.Drawing.Point(0, 0);
+            this.postView.Name = "postView";
+            this.postView.Size = new System.Drawing.Size(240, 236);
+            this.postView.TabIndex = 8;
+            this.postView.Title = null;
+            this.postView.FlipRequested += new System.Windows.Forms.MouseEventHandler(this.postView_FlipRequested);
+            this.postView.ImageClicked += new System.EventHandler(this.postView_ImageClicked);
             // 
             // nextButton
             // 
@@ -113,27 +137,6 @@
             this.prevButton.Size = new System.Drawing.Size(48, 32);
             this.prevButton.TabIndex = 0;
             this.prevButton.Click += new System.EventHandler(this.prevButton_Click);
-            // 
-            // progressStatusBar
-            // 
-            this.progressStatusBar.BackColor = System.Drawing.Color.Black;
-            this.progressStatusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressStatusBar.ForeColor = System.Drawing.Color.Gainsboro;
-            this.progressStatusBar.Location = new System.Drawing.Point(0, 220);
-            this.progressStatusBar.Name = "progressStatusBar";
-            this.progressStatusBar.ProgressColor = System.Drawing.Color.SteelBlue;
-            this.progressStatusBar.Size = new System.Drawing.Size(240, 16);
-            this.progressStatusBar.TabIndex = 9;
-            // 
-            // postView
-            // 
-            this.postView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.postView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.postView.Location = new System.Drawing.Point(0, 0);
-            this.postView.Name = "postView";
-            this.postView.Size = new System.Drawing.Size(240, 236);
-            this.postView.TabIndex = 8;
-            this.postView.ImageClicked += new System.EventHandler(this.postView_ImageClicked);
             // 
             // MainForm
             // 

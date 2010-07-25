@@ -36,11 +36,12 @@ namespace Tumblott.Client.Tumblr
         /// APIを使用する場合，不要。
         /// </summary>
         /// <returns></returns>
+#if false
         private bool Login()
         {
             if (isLoggedIn) return true;
 
-            // FIXME
+            // FIXME API使用の場合は不要
             isLoggedIn = true;
             return true;
 
@@ -133,7 +134,7 @@ namespace Tumblott.Client.Tumblr
                 {
                     if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
-                        // FIXME
+                        // FIXME エラー処理必要
                     }
                 }
             }
@@ -163,6 +164,7 @@ namespace Tumblott.Client.Tumblr
 
             return isLoggedIn;
         }
+#endif
 
         public static HttpWebResponse Fetch(Uri uri)
         {
@@ -171,6 +173,7 @@ namespace Tumblott.Client.Tumblr
 
         public static HttpWebResponse Request(Uri uri, string method, string postData)
         {
+            /*
             if (!instance.isLoggedIn)
             {
                 if (!instance.Login())
@@ -178,6 +181,7 @@ namespace Tumblott.Client.Tumblr
                     return null;
                 }
             }
+            */
 
             if (uri.ToString().Substring(0, 7) != "http://")
             {
@@ -233,6 +237,7 @@ namespace Tumblott.Client.Tumblr
 
         public static HttpWebRequest GetRequest(Uri uri)
         {
+            /*
             if (!instance.isLoggedIn)
             {
                 if (!instance.Login())
@@ -240,6 +245,7 @@ namespace Tumblott.Client.Tumblr
                     return null;
                 }
             }
+            */
 
             HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(uri);
             //request.Headers.Add("Cookie", instance.cookie);
@@ -463,6 +469,12 @@ namespace Tumblott.Client.Tumblr
 
     #endregion
 
+
+    public class TumblrResult
+    {
+        public string Text { get; set; }
+    }
+
     /// <summary>
     /// 投稿リスト
     /// </summary>
@@ -489,7 +501,7 @@ namespace Tumblott.Client.Tumblr
         private List<byte> strByte = new List<byte>();
 
         private Action<int> progressChangedDelg = null;
-        private Action<TumblrPosts> completedDelg = null;
+        private Action<TumblrResult> completedDelg = null;
 
         /// <summary>
         /// ダッシュボードを受信
@@ -497,7 +509,7 @@ namespace Tumblott.Client.Tumblr
         /// <param name="url"></param>
         /// <param name="progressChanged"></param>
         /// <param name="completed"></param>
-        public void FetchDashboard(int start, Action<int> progressChanged, Action<TumblrPosts> completed)
+        public void FetchDashboard(int start, Action<int> progressChanged, Action<TumblrResult> completed)
         {
             lock (lockObject)
             {
@@ -518,8 +530,7 @@ namespace Tumblott.Client.Tumblr
 
         private void FetchDashboardAsync(object o)
         {
-            // FIXME
-            // start, num, type を指定可能にする
+            // FIXME start, num, type を指定可能にする
 
             int start = (int)o;
 
@@ -559,9 +570,18 @@ namespace Tumblott.Client.Tumblr
             }
             catch (Exception e)
             {
-                MessageBox.Show("受信中の例外: " + e.ToString());
+                //MessageBox.Show("受信中の例外: " + e.ToString());
                 CleanupVariables();
-                this.completedDelg(null);
+
+                TumblrResult r = new TumblrResult();
+
+                if (e is WebException)
+                {
+                    Utils.DebugLog((((HttpWebResponse)((WebException)e).Response).StatusCode));
+                    r.Text = (((HttpWebResponse)((WebException)e).Response).StatusCode).ToString();
+                }
+
+                this.completedDelg(r);
             }
         }
 
@@ -653,15 +673,26 @@ namespace Tumblott.Client.Tumblr
                         //Scrape(tmp);
                         ParseXML(tmp);
 
-                        completedDelg(this);
+                        this.completedDelg(null);
                         CleanupVariables();
                     }
                 }
-                catch (IOException e)
+                catch (Exception e)
                 {
                     // error
                     CleanupVariables();
-                    throw e;
+
+                    Utils.DebugLog(e.ToString());
+
+                    TumblrResult r = new TumblrResult();
+
+                    if (e is WebException)
+                    {
+                        Utils.DebugLog((((HttpWebResponse)((WebException)e).Response).StatusCode));
+                        r.Text = (((HttpWebResponse)((WebException)e).Response).StatusCode).ToString();
+                    }
+
+                    this.completedDelg(r);
                 }
             }
         }
@@ -703,6 +734,7 @@ namespace Tumblott.Client.Tumblr
             // 参考:
             // XmlTextReaderを使用してXMLを読み込む (C#)
             // <http://capsulecorp.studio-web.net/tora/cs/XmlTextReader.html>
+            // FIXME Rate limit exceededの場合，ここでWebExceptionが発生(503)
             while (reader.Read())
             {
                 //string[] pathArray = pathStack.ToArray();
@@ -731,7 +763,8 @@ namespace Tumblott.Client.Tumblr
                                     do
                                     {
                                         Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
-                                        if (reader.Name == "max-width" && reader.Value == "250")
+                                        // FIXME 全サイズのURLを持っておくべきかも
+                                        if (reader.Name == "max-width" && reader.Value == ((int)Settings.ThumbnailImageSize).ToString())
                                         {
                                             isThumbnailImageNode = true;
                                         }
@@ -797,13 +830,13 @@ namespace Tumblott.Client.Tumblr
                                 {
                                     post.ContentHeader = "<div><b><a href=\"" + post.LinkUri.ToString() + "\">" + post.LinkText + "</a></b></div>";
                                 }
-                                post.Html = "<html>" + post.ContentHeader + post.ContentBody + post.ContentFooter + "</html>";
                                 post.Info = post.Tumblelog;
                                 if (post.RebloggedFrom != null)
                                 {
                                     post.Info += " reblogged " + post.RebloggedFrom;
                                 }
                                 post.Info += ":";
+                                post.Html = "<html>" + post.ContentHeader + post.ContentBody + post.ContentFooter + "</html>";
                                 // 既にpostsに存在するIDなら追加しない
                                 if (!this.Exists(match => { return (match.Id == post.Id); }))
                                 {
@@ -920,6 +953,7 @@ namespace Tumblott.Client.Tumblr
         }
 
         #region スクレイパー(旧仕様)
+        #if false
         /// <summary>
         /// dashboard の HTML のスクレイピングを行う
         /// </summary>
@@ -1260,7 +1294,6 @@ namespace Tumblott.Client.Tumblr
 
             return dict;
         }
-
         private void Scrape_old(string html)
         {
             /*
@@ -1499,7 +1532,7 @@ namespace Tumblott.Client.Tumblr
                 }
             }
         }
-
+        #endif
         #endregion
     }
 

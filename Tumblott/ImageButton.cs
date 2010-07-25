@@ -18,6 +18,8 @@ namespace Tumblott.Forms
         private Image buttonImg;
         private Image offBuf;
 
+        private SizeF scaleFactor = new SizeF(1, 1);
+
         public Image Image
         {
             get
@@ -40,6 +42,12 @@ namespace Tumblott.Forms
         {
             bgImg = global::Tumblott.Properties.Resources.button_bg;
             bgOnClickImg = global::Tumblott.Properties.Resources.button_bg_onclick;
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            this.scaleFactor = factor;
+            base.ScaleControl(factor, specified);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -127,7 +135,6 @@ namespace Tumblott.Forms
             // 
             this.Name = "ImageButton";
             this.ResumeLayout(false);
-
         }
     }
 }

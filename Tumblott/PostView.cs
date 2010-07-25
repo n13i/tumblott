@@ -20,9 +20,9 @@ namespace Tumblott.Forms
         private TumblrPost post;
 
         private bool isMouseDown;
-        private Point firstTapPoint = new Point();
+        private Point firstTappedPoint = new Point();
         private int totalMouseMove = 0;
-        private Point mouseDown = new Point();
+        private Point tappedPoint = new Point();
         private Point drawPos = new Point();
 
         private string selectedUrl = null;
@@ -30,31 +30,36 @@ namespace Tumblott.Forms
         private Image renderedImg;
         private Image scaledImg;
         private Image avatarImg;
-        private Size avatarImgSize = new Size(64, 64);
+        private Size avatarImgSize = new Size(32, 32);
         private Image loadingImg;
 
         private Image offBuf;
         private Image frameTop;
         private Image frameBottom;
-        private float imgScale = 1F;
+        private SizeF scaleFactor = new SizeF(1, 1);
 
         private Rectangle scrollArea = new Rectangle();
+
+        private bool isScrolling;
 
         private TextRenderer renderer = new TextRenderer();
         private Rectangle textViewArea = new Rectangle(); // テキストビューの実際の座標
         private Rectangle pictureViewArea = new Rectangle();
 
-        private Velocity scrollVelocity = new Velocity();
         private Point tapPosition = new Point();
         private Point prevTapPostion = new Point();
 
         private Thread thread;
+
+        private Scroller scroller;
 
         // 画面切り替えアニメーション用
         private Image flipOffBuf;
         private bool isFlipping = false;
         private Point flipOffset;
         private Velocity flipVelocity;
+
+        private Object lockObj = new Object();
 
         private string text;
         public new string Text
@@ -66,6 +71,20 @@ namespace Tumblott.Forms
             set
             {
                 text = value;
+                if (this.Visible)
+                {
+                    Invalidate();
+                }
+            }
+        }
+
+        private string title;
+        public string Title
+        {
+            get { return title; }
+            set
+            {
+                title = value;
                 if (this.Visible)
                 {
                     Invalidate();
@@ -93,6 +112,9 @@ namespace Tumblott.Forms
                     avatarImg.Dispose();
                     avatarImg = null;
                 }
+
+                //this.ResetPosition();
+
                 this.renderer.Document.Dispose();
                 this.renderer.Document = new TextDocument();
                 Parse(this.renderer.Document, post.Html);
@@ -100,8 +122,11 @@ namespace Tumblott.Forms
             }
         }
 
+        public bool HideHeader { get; set; }
+
         public event EventHandler ImageClicked;
         public event EventHandler LinkClicked;
+        public event MouseEventHandler FlipRequested;
 
         public PostView()
         {
@@ -113,14 +138,41 @@ namespace Tumblott.Forms
 
             post = null;
 
+            isMouseDown = false;
+            isScrolling = false;
+
             // ここでやるとレイアウト後のサイズが反映されない？
             //PrepareImages();
 
             this.HandleDestroyed += new EventHandler(PostView_HandleDestroyed);
 
-            this.thread = new Thread(new ThreadStart(Scroll));
+            this.thread = new Thread(new ThreadStart(Animate));
             this.thread.IsBackground = true;
             this.thread.Start();
+
+            this.scroller = new Scroller(this);
+            this.scroller.Scroll += new MouseEventHandler(scroller_Scroll);
+            this.scroller.ScrollStopped += new EventHandler(scroller_ScrollStopped);
+            this.scroller.Flick += new MouseEventHandler(scroller_Flick);
+        }
+
+        void scroller_Flick(object sender, MouseEventArgs e)
+        {
+            Utils.DebugLog(e.X.ToString());
+            if (this.FlipRequested != null)
+            {
+                this.FlipRequested(this, e);
+            }
+        }
+
+        void scroller_Scroll(object sender, MouseEventArgs e)
+        {
+            this.Scroll(new Point(e.X, e.Y));
+        }
+
+        void scroller_ScrollStopped(object sender, EventArgs e)
+        {
+            Invalidate();
         }
 
         void PostView_HandleDestroyed(object sender, EventArgs e)
@@ -131,34 +183,12 @@ namespace Tumblott.Forms
         /// <summary>
         /// スクロールとその他アニメーション用スレッドメソッド
         /// </summary>
-        private void Scroll()
+        private void Animate()
         {
             Point delta = new Point(0, 0);
 
             while (true)
             {
-                if (isMouseDown)
-                {
-                    object o = new object();
-                    lock (o)
-                    {
-                        scrollVelocity.X = tapPosition.X - prevTapPostion.X;
-                        scrollVelocity.Y = tapPosition.Y - prevTapPostion.Y;
-                        prevTapPostion.X = tapPosition.X;
-                        prevTapPostion.Y = tapPosition.Y;
-                    }
-                }
-                else
-                {
-                    if (scrollVelocity.Y != 0)
-                    {
-                        delta.X = 0;
-                        delta.Y = (int)(scrollVelocity.Y);
-                        this.BeginInvoke(new Action<Point>(ScrollTo), delta);
-                        scrollVelocity.Y = scrollVelocity.Y * 0.95;
-                    }
-                }
-
                 if (isFlipping)
                 {
                     this.BeginInvoke(new Action<int>(DoFlip), 0);
@@ -172,8 +202,7 @@ namespace Tumblott.Forms
         {
             drawPos.X = 0;
             drawPos.Y = 0;
-            scrollVelocity.X = 0;
-            scrollVelocity.Y = 0;
+            this.scroller.StopScroll();
             Invalidate();
         }
 
@@ -246,8 +275,8 @@ namespace Tumblott.Forms
         {
             if (post != null && !isMouseDown)
             {
-                mouseDown.X = e.X;
-                mouseDown.Y = e.Y;
+                tappedPoint.X = e.X;
+                tappedPoint.Y = e.Y;
                 isMouseDown = true;
                 Invalidate();
 
@@ -255,11 +284,11 @@ namespace Tumblott.Forms
                 tapPosition.Y = e.Y;
                 prevTapPostion.X = e.X;
                 prevTapPostion.Y = e.Y;
-                scrollVelocity.X = 0;
-                scrollVelocity.Y = 0;
+                //scrollVelocity.X = 0;
+                //scrollVelocity.Y = 0;
 
-                firstTapPoint.X = e.X;
-                firstTapPoint.Y = e.Y;
+                firstTappedPoint.X = e.X;
+                firstTappedPoint.Y = e.Y;
                 totalMouseMove = 0;
             }
         }
@@ -272,20 +301,21 @@ namespace Tumblott.Forms
                 tapPosition.X = e.X;
                 tapPosition.Y = e.Y;
 
-                totalMouseMove += (Math.Abs(e.X - mouseDown.X) + Math.Abs(e.Y - mouseDown.Y));
+                totalMouseMove += (Math.Abs(e.X - tappedPoint.X) + Math.Abs(e.Y - tappedPoint.Y));
 
-                ScrollTo(new Point(e.X - mouseDown.X, e.Y - mouseDown.Y));
+                isScrolling = true;
+                //Scroll(new Point(e.X - tappedPoint.X, e.Y - tappedPoint.Y));
 
-                mouseDown.X = e.X;
-                mouseDown.Y = e.Y;
+                tappedPoint.X = e.X;
+                tappedPoint.Y = e.Y;
             }
         }
 
         private void PostView_MouseUp(object sender, MouseEventArgs e)
         {
-            if (isMouseDown == true && totalMouseMove < (int)(5 * imgScale)) // 要調整
+            if (isMouseDown == true && totalMouseMove < (int)(3 * scaleFactor.Width)) // 要調整
             {
-                if (pictureViewArea.Contains(firstTapPoint.X, firstTapPoint.Y))
+                if (pictureViewArea.Contains(firstTappedPoint.X, firstTappedPoint.Y))
                 {
                     Utils.DebugLog("MouseUp: ImageClicked");
                     EventHandler evh = ImageClicked;
@@ -294,7 +324,7 @@ namespace Tumblott.Forms
                         evh(this, e);
                     }
                 }
-                else if (textViewArea.Contains(firstTapPoint.X, firstTapPoint.Y))
+                else if (textViewArea.Contains(firstTappedPoint.X, firstTappedPoint.Y))
                 {
                     Point p = new Point();
                     p.X = e.X - this.textViewArea.X;
@@ -315,8 +345,10 @@ namespace Tumblott.Forms
                 }
             }
             
-            Invalidate();
             isMouseDown = false;
+            isScrolling = false;
+
+            Invalidate();
         }
 
         void ContextMenu_Popup(object sender, EventArgs e)
@@ -386,14 +418,48 @@ namespace Tumblott.Forms
             }
         }
 
-        private void ScrollTo(Point delta)
+#if false
+        private bool IsStopScroll(Point delta)
         {
-            drawPos.X += delta.X;
-            drawPos.Y += delta.Y;
-            if (drawPos.Y < -(scrollArea.Height - this.Height)) { drawPos.Y = -(scrollArea.Height - this.Height); }
-            if (drawPos.Y > 0) { drawPos.Y = 0; }
+            // FIXME offBuf使うのはどうかと
+            return (drawPos.Y <= -(scrollArea.Height - offBuf.Height) || drawPos.Y >= 0);
+        }
+#endif
+
+        // deltaで与えた分だけスクロールさせる
+        private void Scroll(Point delta)
+        {
+            bool isScrollable = true;
+
+            lock (lockObj)
+            {
+                drawPos.X += delta.X;
+                drawPos.Y += delta.Y;
+
+                if (drawPos.Y < -(scrollArea.Height - this.Height))
+                {
+                    drawPos.Y = -(scrollArea.Height - this.Height);
+                    isScrollable = false;
+                }
+                if (drawPos.Y > 0)
+                {
+                    drawPos.Y = 0;
+                    isScrollable = false;
+                }
+            }
+
+            if (!isScrollable)
+            {
+                scroller.StopScroll();
+            }
 
             Invalidate();
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            this.scaleFactor = factor;
+            base.ScaleControl(factor, specified);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -403,52 +469,28 @@ namespace Tumblott.Forms
 
         private void PrepareImages(Graphics gr)
         {
-            float ratio = gr.DpiX / 192F;
-            
-            Image frameTLImg = global::Tumblott.Properties.Resources.frame_top_left;
-            Image frameTRImg = global::Tumblott.Properties.Resources.frame_top_right;
-            Image frameBLImg = global::Tumblott.Properties.Resources.frame_bottom_left;
-            Image frameBRImg = global::Tumblott.Properties.Resources.frame_bottom_right;
+            // レイアウトは96dpiで作成しスケーリングはscaleFactorに従う
+            // ただし画像は192dpiでのサイズで用意
 
-            frameTop = new Bitmap(this.Width, (int)(frameTLImg.Height * ratio), System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
-            frameBottom = new Bitmap(this.Width, (int)(frameBLImg.Height*ratio), System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+            // 100x16 @ 192dpi
+            Image frameShadowImg = global::Tumblott.Properties.Resources.frame_shadow;
 
-            Graphics g;
-            SolidBrush bBgColor = new SolidBrush(Color.FromArgb(44, 71, 98));
-            SolidBrush bWhite = new SolidBrush(Color.White);
+            this.frameTop = new Bitmap(this.Width - (int)(4 * scaleFactor.Width), (int)(frameShadowImg.Height * 0.5 * scaleFactor.Height), System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+
             Rectangle dstRect, srcRect;
 
-            using (g = Graphics.FromImage(frameTop))
+            using (Graphics g = Graphics.FromImage(frameTop))
             {
-                g.FillRectangle(bBgColor, 0, 0, frameTop.Width, frameTop.Height);
-                g.FillRectangle(bWhite, (int)(4 * ratio), (int)(20 * ratio), frameTop.Width - (int)(8 * ratio), frameTop.Height - (int)(20 * ratio));
+                srcRect = new Rectangle(0, 0, frameShadowImg.Width, frameShadowImg.Height);
+                for (int x = 0; x < this.frameTop.Width; x += (int)(frameShadowImg.Width * 0.5))
+                {
+                    dstRect = new Rectangle(x, 0, (int)(frameShadowImg.Width * 0.5 * scaleFactor.Width), (int)(frameShadowImg.Height * 0.5 * scaleFactor.Height));
 
-                srcRect = new Rectangle(0, 0, frameTLImg.Width, frameTLImg.Height);
-                dstRect = new Rectangle(0, 0, (int)(frameTLImg.Width * ratio), (int)(frameTLImg.Height * ratio));
-                g.DrawImage(frameTLImg, dstRect, srcRect, GraphicsUnit.Pixel);
-
-                srcRect = new Rectangle(0, 0, frameTRImg.Width, frameTRImg.Height);
-                dstRect = new Rectangle(this.Width - (int)(frameTRImg.Width * ratio), 0, (int)(frameTRImg.Width * ratio), (int)(frameTRImg.Height * ratio));
-                g.DrawImage(frameTRImg, dstRect, srcRect, GraphicsUnit.Pixel);
+                    g.DrawImage(frameShadowImg, dstRect, srcRect, GraphicsUnit.Pixel);
+                }
             }
 
-            using (g = Graphics.FromImage(frameBottom))
-            {
-                g.FillRectangle(bBgColor, 0, 0, frameBottom.Width, frameBottom.Height);
-                g.FillRectangle(bWhite, (int)(4 * ratio), 0, frameBottom.Width - (int)(8 * ratio), frameBottom.Height - (int)(4 * ratio));
-
-                srcRect = new Rectangle(0, 0, frameBLImg.Width, frameBLImg.Height);
-                dstRect = new Rectangle(0, 0, (int)(frameBLImg.Width * ratio), (int)(frameBLImg.Height * ratio));
-                g.DrawImage(frameBLImg, dstRect, srcRect, GraphicsUnit.Pixel);
-
-                srcRect = new Rectangle(0, 0, frameBRImg.Width, frameBRImg.Height);
-                dstRect = new Rectangle(this.Width - (int)(frameBRImg.Width * ratio), 0, (int)(frameBRImg.Width * ratio), (int)(frameBRImg.Height * ratio));
-                g.DrawImage(frameBRImg, dstRect, srcRect, GraphicsUnit.Pixel);
-            }
-
-            this.imgScale = ratio;
-
-            loadingImg = global::Tumblott.Properties.Resources.loading_b0;
+            loadingImg = global::Tumblott.Properties.Resources.image_loading;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -456,6 +498,7 @@ namespace Tumblott.Forms
             if (offBuf == null)
             {
                 offBuf = new Bitmap(this.Width, this.Height, System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+                Utils.DebugLog("PostView: offBuf created, w=" + this.Width.ToString() + ", h=" + this.Height.ToString());
             }
 
             if (frameTop == null)
@@ -465,42 +508,56 @@ namespace Tumblott.Forms
 
             Graphics g = Graphics.FromImage(offBuf);
 
-            //SolidBrush bBgColor = new SolidBrush(Color.FromArgb(44, 71, 98));
             SolidBrush bBgColor = new SolidBrush(this.BackColor);
             SolidBrush bWhite = new SolidBrush(Color.White);
-            SolidBrush bAvatarBG = new SolidBrush(this.BackColor);
+            SolidBrush bDescColor = new SolidBrush(Color.FromArgb(153, 153, 153));
+            SolidBrush bAvatarBG = new SolidBrush(Color.Black);
 
             // まずは背景を塗りつぶす
             g.FillRectangle(bBgColor, 0, 0, this.Width, this.Height);
 
             // ヘッダ部の描画
-            // アバター画像部
-            g.FillRectangle(bAvatarBG, (int)(4 * imgScale), (int)(4 * imgScale) + drawPos.Y, (int)(this.avatarImgSize.Width * imgScale), (int)(this.avatarImgSize.Height * imgScale));
-            Font font = new Font("MS UI Gothic", 9F, FontStyle.Regular);
-            //SizeF size = g.MeasureString("X", font);
-            g.DrawString(text, font, bWhite, (4+64+4)*imgScale, (4*imgScale) + drawPos.Y);
+            int headerHeight = 0;
+            if (!this.HideHeader)
+            {
+                // アバター画像部
+                g.FillRectangle(bAvatarBG, (int)(2 * scaleFactor.Width), (int)(4 * scaleFactor.Height) + drawPos.Y, (int)(this.avatarImgSize.Width * scaleFactor.Width), (int)(this.avatarImgSize.Height * scaleFactor.Height));
 
-            //int headerHeight = (int)(size.Height + (4*imgScale));
-            int headerHeight = (int)((4+64+4)*imgScale);
+                Font font = new Font("Tahoma", 10F, FontStyle.Bold);
+                SizeF size = g.MeasureString("X", font);
+                g.DrawString(this.Title, font, bWhite, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, (4 * scaleFactor.Height) + drawPos.Y);
+                font.Dispose();
+
+                font = new Font("Tahoma", 8F, FontStyle.Bold);
+                //SizeF size = g.MeasureString("X", font);
+                g.DrawString(this.Text, font, bDescColor, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, (5 * scaleFactor.Height) + size.Height + drawPos.Y);
+                font.Dispose();
+
+                //int headerHeight = (int)(size.Height + (4*imgScale));
+                headerHeight = (int)((4 + this.avatarImgSize.Height) * scaleFactor.Height);
+
+                // ヘッダ部と白い領域の間
+                headerHeight += this.frameTop.Height;
+            }
 
             // 白い領域
             Rectangle drawArea = new Rectangle();
-            drawArea.X = (int)(4*imgScale);
-            drawArea.Y = headerHeight + (int)(4*imgScale);
-            drawArea.Width = this.Width - (int)(8*imgScale);
-            drawArea.Height = (int)(32*imgScale);
+            drawArea.X = (int)(2 * scaleFactor.Width);
+            drawArea.Y = headerHeight + (int)(2 * scaleFactor.Height);
+            drawArea.Width = this.Width - (int)(4 * scaleFactor.Width);
+            drawArea.Height = (int)(16 * scaleFactor.Height);
             // 白い領域内の描画エリア
             Rectangle drawInnerArea = new Rectangle();
-            drawInnerArea.X = drawArea.X + (int)(16*imgScale);
-            drawInnerArea.Y = drawArea.Y + (int)(16*imgScale);
-            drawInnerArea.Width = drawArea.Width - (int)(32*imgScale);
-            drawInnerArea.Height = drawArea.Height - (int)(32*imgScale);
+            drawInnerArea.X = drawArea.X + (int)(8 * scaleFactor.Width);
+            drawInnerArea.Y = drawArea.Y + (int)(8 * scaleFactor.Height);
+            drawInnerArea.Width = drawArea.Width - (int)(16 * scaleFactor.Width);
+            drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
 
-            int pictureFramePadding = (int)(8 * imgScale);
+            int pictureFramePadding = (int)(4 * scaleFactor.Width);
 
             int textPosY = 0;
 
-            if(post != null)
+            if (post != null)
             {
                 if (post.Type == TumblrPost.Types.Photo)
                 {
@@ -508,18 +565,18 @@ namespace Tumblott.Forms
                     {
                         if (scaledImg == null)
                         {
-                            scaledImg = Utils.GetScaledImage(post.Image, drawInnerArea.Width - pictureFramePadding*2, this.Height - pictureFramePadding*2 - drawInnerArea.Y, Utils.ScaleMode.Fit);
+                            scaledImg = Utils.GetScaledImage(post.Image, drawInnerArea.Width - pictureFramePadding * 2, this.Height - pictureFramePadding * 2 - drawInnerArea.Y, Utils.ScaleMode.Fit);
                         }
-                        textPosY += scaledImg.Height + pictureFramePadding*2;
-                        drawArea.Height += scaledImg.Height + pictureFramePadding*2;
-                        drawInnerArea.Height += scaledImg.Height + pictureFramePadding*2;
+                        textPosY += scaledImg.Height + pictureFramePadding * 2;
+                        drawArea.Height += scaledImg.Height + pictureFramePadding * 2;
+                        drawInnerArea.Height += scaledImg.Height + pictureFramePadding * 2;
                     }
                     else
                     {
                         // 読み込み中画像のためのスペースを確保
-                        textPosY += loadingImg.Height + pictureFramePadding*2;
-                        drawArea.Height += loadingImg.Height + pictureFramePadding*2;
-                        drawInnerArea.Height += loadingImg.Height + pictureFramePadding*2;
+                        textPosY += loadingImg.Height + pictureFramePadding * 2;
+                        drawArea.Height += loadingImg.Height + pictureFramePadding * 2;
+                        drawInnerArea.Height += loadingImg.Height + pictureFramePadding * 2;
                     }
                 }
 
@@ -527,7 +584,7 @@ namespace Tumblott.Forms
                 {
                     if (avatarImg == null)
                     {
-                        avatarImg = Utils.GetScaledImage(post.AvatarImage, (int)(this.avatarImgSize.Width * imgScale), (int)(this.avatarImgSize.Height * imgScale), Utils.ScaleMode.Full);
+                        avatarImg = Utils.GetScaledImage(post.AvatarImage, (int)(this.avatarImgSize.Width * scaleFactor.Width), (int)(this.avatarImgSize.Height * scaleFactor.Height), Utils.ScaleMode.Full);
                     }
                 }
 
@@ -547,22 +604,26 @@ namespace Tumblott.Forms
             }
 
             // 小さい場合，吹き出しの形が崩れないサイズにする
-            if (drawArea.Height < (int)(56 * imgScale))
+            if (drawArea.Height < (int)(28 * scaleFactor.Height))
             {
-                drawArea.Height = (int)(56 * imgScale);
-                drawInnerArea.Height = drawArea.Height - (int)(32 * imgScale);
+                drawArea.Height = (int)(28 * scaleFactor.Height);
+                drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
             }
 
+            // ヘッダと描画部の間
+            if (!this.HideHeader)
+            {
+                g.DrawImage(this.frameTop, (int)(2 * scaleFactor.Width), drawArea.Y - this.frameTop.Height + drawPos.Y);
+            }
+            // 描画部(白いエリア)
             g.FillRectangle(bWhite, drawArea.X, drawArea.Y + drawPos.Y, drawArea.Width, drawArea.Height);
-            //g.DrawImage(frameTop, 0, drawArea.Y - (int)(20*imgScale) + drawPos.Y);
-            //g.DrawImage(frameBottom, 0, drawArea.Y + drawArea.Height + (int)(4*imgScale) - frameBottom.Height + drawPos.Y);
 
             if (post != null)
             {
                 // ヘッダ部にアバター画像を表示
-                if (avatarImg != null)
+                if (avatarImg != null && !this.HideHeader)
                 {
-                    g.DrawImage(avatarImg, (int)(4*imgScale), (int)(4*imgScale) + drawPos.Y);
+                    g.DrawImage(avatarImg, (int)(2 * scaleFactor.Width), (int)(4 * scaleFactor.Height) + drawPos.Y);
                 }
                 // Photo を表示
                 if (post.Type == TumblrPost.Types.Photo)
@@ -577,10 +638,10 @@ namespace Tumblott.Forms
                         img = loadingImg;
                     }
 
-                    pictureViewArea = new Rectangle(drawInnerArea.X, drawInnerArea.Y + drawPos.Y, img.Width + pictureFramePadding*2, img.Height + pictureFramePadding*2);
+                    pictureViewArea = new Rectangle(drawInnerArea.X, drawInnerArea.Y + drawPos.Y, img.Width + pictureFramePadding * 2, img.Height + pictureFramePadding * 2);
                     using (Pen p = new Pen(Color.LightGray))
                     {
-                        g.DrawRectangle(p, pictureViewArea.X, pictureViewArea.Y, pictureViewArea.Width-1, pictureViewArea.Height-1);
+                        g.DrawRectangle(p, pictureViewArea.X, pictureViewArea.Y, pictureViewArea.Width - 1, pictureViewArea.Height - 1);
                     }
                     g.DrawImage(img, pictureViewArea.X + pictureFramePadding, pictureViewArea.Y + pictureFramePadding);
                 }
@@ -600,6 +661,35 @@ namespace Tumblott.Forms
                 */
             }
 
+            // フリックスレッド向けに値を設定
+            scrollArea.X = 0;
+            scrollArea.Y = 0;
+            scrollArea.Width = this.Width;
+            scrollArea.Height = headerHeight + drawArea.Height + (int)(12 * scaleFactor.Height) + (int)(16 * scaleFactor.Height); // 32 は若干の余裕
+
+            // スクロールバーを描画
+            if(isScrolling || scroller.IsScrolling)
+            {
+                int sbHeight = offBuf.Height * offBuf.Height / scrollArea.Height;
+                int sbPosY = -drawPos.Y * offBuf.Height / scrollArea.Height;
+
+                Point[] points = {
+                                     new Point(this.Width-1, sbPosY-(int)(4*scaleFactor.Height)),
+                                     new Point(this.Width-(int)(4*scaleFactor.Width), sbPosY),
+                                     new Point(this.Width-(int)(4*scaleFactor.Width), sbPosY+sbHeight),
+                                     new Point(this.Width-1, sbPosY+sbHeight+(int)(4*scaleFactor.Height)),
+                                 };
+
+                Pen p = new Pen(Color.Black);
+                SolidBrush b = new SolidBrush(Color.Gray);
+                //g.FillRectangle(b, this.Width - (int)(4 * imgScale), sbPosY, (int)(4 * imgScale), sbHeight);
+                g.FillPolygon(b, points);
+                g.DrawPolygon(p, points);
+
+                p.Dispose();
+                b.Dispose();
+            }
+
             // フリップ動作中
             if (isFlipping && flipOffBuf != null)
             {
@@ -609,13 +699,14 @@ namespace Tumblott.Forms
             // オフスクリーンバッファを画面へ描画
             e.Graphics.DrawImage(offBuf, 0, 0);
 
-            scrollArea.X = 0;
-            scrollArea.Y = 0;
-            scrollArea.Width = this.Width;
-            scrollArea.Height = headerHeight + drawArea.Height + (int)(24*imgScale) + (int)(32*imgScale); // 32 は若干の余裕
+            if (Settings.DebugLog)
+            {
+                scroller.DrawStatus(e.Graphics);
+            }
 
             bBgColor.Dispose();
             bWhite.Dispose();
+            bDescColor.Dispose();
             bAvatarBG.Dispose();
             g.Dispose();
         }
@@ -634,7 +725,9 @@ namespace Tumblott.Forms
             }
             catch (Exception e)
             {
+                // FIXME
                 Utils.DebugLog(e);
+                return;
             }
             xmlDoc.Normalize();
             TraverseNodes(doc, xmlDoc.DocumentElement, null);
@@ -735,6 +828,19 @@ namespace Tumblott.Forms
             ResetPosition();
 
             Invalidate();
+        }
+
+        private void PostView_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.Down:
+                    Scroll(new Point(0, 10));
+                    break;
+                case Keys.Up:
+                    Scroll(new Point(0, -10));
+                    break;
+            }
         }
     }
 }

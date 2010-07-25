@@ -33,10 +33,7 @@
             // ImageView
             // 
             this.Name = "ImageView";
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseMove);
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseDown);
             this.Resize += new System.EventHandler(this.ImageView_Resize);
-            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseUp);
             this.ResumeLayout(false);
 
         }

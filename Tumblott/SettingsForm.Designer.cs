@@ -37,6 +37,11 @@
             this.passwordLabel = new System.Windows.Forms.Label();
             this.emailLabel = new System.Windows.Forms.Label();
             this.tabGeneralPage = new System.Windows.Forms.TabPage();
+            this.appliedAfterRestartLabel = new System.Windows.Forms.Label();
+            this.showMenuBarCheckBox = new System.Windows.Forms.CheckBox();
+            this.showFullScreenCheckBox = new System.Windows.Forms.CheckBox();
+            this.thumbImageSizeLabel = new System.Windows.Forms.Label();
+            this.thumbImageSizeComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.openLinkCheckBox = new System.Windows.Forms.CheckBox();
@@ -56,14 +61,15 @@
             this.noProxyRadioButton = new System.Windows.Forms.RadioButton();
             this.useDefaultRadioButton = new System.Windows.Forms.RadioButton();
             this.tabAboutPage = new System.Windows.Forms.TabPage();
+            this.licenseLinkLabel = new System.Windows.Forms.LinkLabel();
             this.iconPictureBox = new System.Windows.Forms.PictureBox();
             this.debugButton = new System.Windows.Forms.Button();
             this.licenseLabel = new System.Windows.Forms.Label();
             this.copyrightLabel = new System.Windows.Forms.Label();
             this.webLinkLabel = new System.Windows.Forms.LinkLabel();
-            this.projectLinkLabel = new System.Windows.Forms.LinkLabel();
             this.versionLabel = new System.Windows.Forms.Label();
             this.nameLabel = new System.Windows.Forms.Label();
+            this.debugCheckBox = new System.Windows.Forms.CheckBox();
             this.tabControl.SuspendLayout();
             this.tabAccountPage.SuspendLayout();
             this.tabGeneralPage.SuspendLayout();
@@ -143,6 +149,11 @@
             // tabGeneralPage
             // 
             this.tabGeneralPage.AutoScroll = true;
+            this.tabGeneralPage.Controls.Add(this.appliedAfterRestartLabel);
+            this.tabGeneralPage.Controls.Add(this.showMenuBarCheckBox);
+            this.tabGeneralPage.Controls.Add(this.showFullScreenCheckBox);
+            this.tabGeneralPage.Controls.Add(this.thumbImageSizeLabel);
+            this.tabGeneralPage.Controls.Add(this.thumbImageSizeComboBox);
             this.tabGeneralPage.Controls.Add(this.label2);
             this.tabGeneralPage.Controls.Add(this.numericUpDown1);
             this.tabGeneralPage.Controls.Add(this.openLinkCheckBox);
@@ -153,9 +164,49 @@
             this.tabGeneralPage.TabIndex = 0;
             this.tabGeneralPage.Text = global::Tumblott.Messages.General;
             // 
+            // appliedAfterRestartLabel
+            // 
+            this.appliedAfterRestartLabel.Location = new System.Drawing.Point(4, 116);
+            this.appliedAfterRestartLabel.Name = "appliedAfterRestartLabel";
+            this.appliedAfterRestartLabel.Size = new System.Drawing.Size(216, 27);
+            this.appliedAfterRestartLabel.TabIndex = 9;
+            this.appliedAfterRestartLabel.Text = "The changes below are applied after restart.";
+            // 
+            // showMenuBarCheckBox
+            // 
+            this.showMenuBarCheckBox.Location = new System.Drawing.Point(8, 172);
+            this.showMenuBarCheckBox.Name = "showMenuBarCheckBox";
+            this.showMenuBarCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.showMenuBarCheckBox.TabIndex = 8;
+            this.showMenuBarCheckBox.Text = "Show menu bar";
+            // 
+            // showFullScreenCheckBox
+            // 
+            this.showFullScreenCheckBox.Enabled = false;
+            this.showFullScreenCheckBox.Location = new System.Drawing.Point(8, 152);
+            this.showFullScreenCheckBox.Name = "showFullScreenCheckBox";
+            this.showFullScreenCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.showFullScreenCheckBox.TabIndex = 7;
+            this.showFullScreenCheckBox.Text = "Fullscreen";
+            // 
+            // thumbImageSizeLabel
+            // 
+            this.thumbImageSizeLabel.Location = new System.Drawing.Point(6, 85);
+            this.thumbImageSizeLabel.Name = "thumbImageSizeLabel";
+            this.thumbImageSizeLabel.Size = new System.Drawing.Size(115, 12);
+            this.thumbImageSizeLabel.TabIndex = 6;
+            this.thumbImageSizeLabel.Text = "Thumbnail image size";
+            // 
+            // thumbImageSizeComboBox
+            // 
+            this.thumbImageSizeComboBox.Location = new System.Drawing.Point(172, 82);
+            this.thumbImageSizeComboBox.Name = "thumbImageSizeComboBox";
+            this.thumbImageSizeComboBox.Size = new System.Drawing.Size(48, 20);
+            this.thumbImageSizeComboBox.TabIndex = 5;
+            // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(6, 49);
+            this.label2.Location = new System.Drawing.Point(6, 54);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(157, 19);
             this.label2.TabIndex = 3;
@@ -164,7 +215,7 @@
             // numericUpDown1
             // 
             this.numericUpDown1.Enabled = false;
-            this.numericUpDown1.Location = new System.Drawing.Point(172, 49);
+            this.numericUpDown1.Location = new System.Drawing.Point(172, 51);
             this.numericUpDown1.Name = "numericUpDown1";
             this.numericUpDown1.Size = new System.Drawing.Size(48, 19);
             this.numericUpDown1.TabIndex = 2;
@@ -321,12 +372,13 @@
             // tabAboutPage
             // 
             this.tabAboutPage.AutoScroll = true;
+            this.tabAboutPage.Controls.Add(this.debugCheckBox);
+            this.tabAboutPage.Controls.Add(this.licenseLinkLabel);
             this.tabAboutPage.Controls.Add(this.iconPictureBox);
             this.tabAboutPage.Controls.Add(this.debugButton);
             this.tabAboutPage.Controls.Add(this.licenseLabel);
             this.tabAboutPage.Controls.Add(this.copyrightLabel);
             this.tabAboutPage.Controls.Add(this.webLinkLabel);
-            this.tabAboutPage.Controls.Add(this.projectLinkLabel);
             this.tabAboutPage.Controls.Add(this.versionLabel);
             this.tabAboutPage.Controls.Add(this.nameLabel);
             this.tabAboutPage.Location = new System.Drawing.Point(4, 21);
@@ -334,6 +386,16 @@
             this.tabAboutPage.Size = new System.Drawing.Size(232, 243);
             this.tabAboutPage.TabIndex = 1;
             this.tabAboutPage.Text = global::Tumblott.Messages.About;
+            // 
+            // licenseLinkLabel
+            // 
+            this.licenseLinkLabel.Location = new System.Drawing.Point(8, 116);
+            this.licenseLinkLabel.Name = "licenseLinkLabel";
+            this.licenseLinkLabel.Size = new System.Drawing.Size(216, 16);
+            this.licenseLinkLabel.TabIndex = 8;
+            this.licenseLinkLabel.TabStop = true;
+            this.licenseLinkLabel.Text = "the MIT license.";
+            this.licenseLinkLabel.Click += new System.EventHandler(this.licenseLinkLabel_Click);
             // 
             // iconPictureBox
             // 
@@ -357,9 +419,9 @@
             // 
             this.licenseLabel.Location = new System.Drawing.Point(8, 100);
             this.licenseLabel.Name = "licenseLabel";
-            this.licenseLabel.Size = new System.Drawing.Size(216, 39);
+            this.licenseLabel.Size = new System.Drawing.Size(216, 16);
             this.licenseLabel.TabIndex = 3;
-            this.licenseLabel.Text = "This software is released under the MIT license.";
+            this.licenseLabel.Text = "This software is released under";
             // 
             // copyrightLabel
             // 
@@ -376,16 +438,8 @@
             this.webLinkLabel.Size = new System.Drawing.Size(187, 16);
             this.webLinkLabel.TabIndex = 4;
             this.webLinkLabel.TabStop = true;
-            this.webLinkLabel.Text = "http://labs.m2hq.net/Tumblott/";
-            // 
-            // projectLinkLabel
-            // 
-            this.projectLinkLabel.Location = new System.Drawing.Point(8, 164);
-            this.projectLinkLabel.Name = "projectLinkLabel";
-            this.projectLinkLabel.Size = new System.Drawing.Size(200, 16);
-            this.projectLinkLabel.TabIndex = 5;
-            this.projectLinkLabel.TabStop = true;
-            this.projectLinkLabel.Text = "http://code.google.com/p/tumblott/";
+            this.webLinkLabel.Text = "http://tumblott.m2hq.net/";
+            this.webLinkLabel.Click += new System.EventHandler(this.webLinkLabel_Click);
             // 
             // versionLabel
             // 
@@ -402,6 +456,15 @@
             this.nameLabel.Size = new System.Drawing.Size(163, 16);
             this.nameLabel.TabIndex = 0;
             this.nameLabel.Text = "Tumblott";
+            // 
+            // debugCheckBox
+            // 
+            this.debugCheckBox.Location = new System.Drawing.Point(8, 178);
+            this.debugCheckBox.Name = "debugCheckBox";
+            this.debugCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.debugCheckBox.TabIndex = 9;
+            this.debugCheckBox.Text = "Super Debug Mode RX";
+            //this.debugCheckBox.UseVisualStyleBackColor = true;
             // 
             // SettingsForm
             // 
@@ -438,7 +501,6 @@
         private System.Windows.Forms.Label nameLabel;
         private System.Windows.Forms.Label copyrightLabel;
         private System.Windows.Forms.LinkLabel webLinkLabel;
-        private System.Windows.Forms.LinkLabel projectLinkLabel;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label licenseLabel;
         private System.Windows.Forms.TabPage tabNetworkPage;
@@ -466,6 +528,13 @@
         private System.Windows.Forms.CheckBox proxyOnlyImagesCheckBox;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.ComboBox thumbImageSizeComboBox;
+        private System.Windows.Forms.Label thumbImageSizeLabel;
+        private System.Windows.Forms.LinkLabel licenseLinkLabel;
+        private System.Windows.Forms.CheckBox showMenuBarCheckBox;
+        private System.Windows.Forms.CheckBox showFullScreenCheckBox;
+        private System.Windows.Forms.Label appliedAfterRestartLabel;
+        private System.Windows.Forms.CheckBox debugCheckBox;
 
 
     }

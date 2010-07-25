@@ -12,8 +12,6 @@
     <AssemblyName>Tumblott</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkSubset>
-    </TargetFrameworkSubset>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <ApplicationIcon>tumblott-icon.ico</ApplicationIcon>
     <PublishUrl>publish\</PublishUrl>
@@ -30,10 +28,11 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -42,7 +41,7 @@
     <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -51,6 +50,19 @@
     <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DialogBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DialogBox.Designer.cs">
+      <DependentUpon>DialogBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LicenseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LicenseForm.Designer.cs">
+      <DependentUpon>LicenseForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Scroller.cs" />
     <Compile Include="ImageButton.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -97,6 +109,11 @@
     <Compile Include="ProgressStatusBar.Designer.cs">
       <DependentUpon>ProgressStatusBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="StatusPanel.cs">
       <SubType>Component</SubType>
@@ -118,11 +135,17 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="DialogBox.resx">
+      <DependentUpon>DialogBox.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ImageButton.resx">
       <DependentUpon>ImageButton.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ImageView.resx">
       <DependentUpon>ImageView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LicenseForm.resx">
+      <DependentUpon>LicenseForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Messages.ja-JP.resx">
       <LastGenOutput>Messages.ja-JP.Designer.cs</LastGenOutput>
@@ -149,23 +172,30 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86" />
-    <Reference Include="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />
-    <Reference Include="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />
-    <Reference Include="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />
-    <Reference Include="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />
-    <Reference Include="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />
+    <Reference Include="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\loading_b1.png" />
@@ -253,6 +283,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\tumblott-icon.png" />
+    <Content Include="Resources\frame_shadow.png" />
+    <None Include="Resources\image_loading.png" />
+    <Content Include="Resources\license.txt" />
     <Content Include="tumblott-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

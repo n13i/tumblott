@@ -21,7 +21,7 @@ namespace Tumblott.Properties {
     // ResGen を実行し直すか、または VS プロジェクトをビルドし直します。
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "2.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    //[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
@@ -123,6 +123,13 @@ namespace Tumblott.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap frame_shadow {
+            get {
+                object obj = ResourceManager.GetObject("frame_shadow", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap frame_top_left {
             get {
                 object obj = ResourceManager.GetObject("frame_top_left", resourceCulture);
@@ -134,6 +141,31 @@ namespace Tumblott.Properties {
             get {
                 object obj = ResourceManager.GetObject("frame_top_right", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap image_loading {
+            get {
+                object obj = ResourceManager.GetObject("image_loading", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Copyright (c) 2010 n13i &lt;n13i@m2hq.net&gt;
+        ///
+        ///Permission is hereby granted, free of charge, to any person obtaining a copy
+        ///of this software and associated documentation files (the &quot;Software&quot;), to deal
+        ///in the Software without restriction, including without limitation the rights
+        ///to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        ///copies of the Software, and to permit persons to whom the Software is
+        ///furnished to do so, subject to the following conditions:
+        ///
+        ///The above copyright notice a [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        internal static string license {
+            get {
+                return ResourceManager.GetString("license", resourceCulture);
             }
         }
         

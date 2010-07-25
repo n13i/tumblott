@@ -10,7 +10,7 @@ namespace Tumblott
         /// <summary>
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
-        [STAThread]
+        //[STAThread]
         static void Main()
         {
             // 二重起動チェック

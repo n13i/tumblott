@@ -47,6 +47,12 @@ namespace Tumblott
         {
             this.post = post;
             imageView.Image = null;
+            if (post.Image != null)
+            {
+                imageView.Image = post.Image;
+            }
+            imageView.ResetPosition();
+
             loadingIndicator.Visible = true;
             isImageLoaded = false;
             LoadImage();
@@ -62,6 +68,8 @@ namespace Tumblott
             if (post.LargeImage == null)
             {
                 // GetImageを呼ぶとMainFormのLoadingIndicatorが動作する
+                // FIXME 前回表示させようとした画像のGetImageが動作中に閉じてしまうと
+                //       次に表示させようとしたウィンドウに表示されてしまう
                 post.GetImage(TumblrPost.ImageType.Large, TumblrPost.Priority.High, null, p => { this.BeginInvoke(new Action<TumblrPost>(LoadImageDone), (TumblrPost)(((JobResult)p).Object)); });
             }
             else

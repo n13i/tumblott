@@ -12,7 +12,8 @@ namespace Tumblott.Forms
 {
     public class LoadingIndicator : UserControl
     {
-        private ImageList imgList = new ImageList();
+        private static int N_IMAGES = 6;
+        private Image[] imgs = new Image[N_IMAGES];
         private int currentImg = 0;
         private bool isThreadRunning = false;
         private Thread t;
@@ -38,14 +39,12 @@ namespace Tumblott.Forms
             //this.HandleCreated += new EventHandler(LoadingIndicator_HandleCreated);
             this.HandleDestroyed += new EventHandler(LoadingIndicator_HandleDestroyed);
 
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b0);
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b1);
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b2);
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b3);
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b4);
-            imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b5);
-            //imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b6);
-            //imgList.Images.Add(global::Tumblott.Properties.Resources.loading_b7);
+            imgs[0] = global::Tumblott.Properties.Resources.loading_b0;
+            imgs[1] = global::Tumblott.Properties.Resources.loading_b1;
+            imgs[2] = global::Tumblott.Properties.Resources.loading_b2;
+            imgs[3] = global::Tumblott.Properties.Resources.loading_b3;
+            imgs[4] = global::Tumblott.Properties.Resources.loading_b4;
+            imgs[5] = global::Tumblott.Properties.Resources.loading_b5;
         }
 
         void LoadingIndicator_HandleCreated(object sender, EventArgs e)
@@ -83,7 +82,7 @@ namespace Tumblott.Forms
         private void SetNextImage(object o)
         {
             currentImg++;
-            if (currentImg >= imgList.Images.Count)
+            if (currentImg >= N_IMAGES)
             {
                 currentImg = 0;
             }
@@ -134,13 +133,14 @@ namespace Tumblott.Forms
 
             Graphics g = Graphics.FromImage(offImg);
 
-            Image img = imgList.Images[currentImg];
+            Image img = imgs[currentImg];
 
             Rectangle dstRect = new Rectangle(0, 0, this.Width, this.Height);
 
             ImageAttributes imgAttr = new ImageAttributes();
             //imgAttr.SetColorKey(Color.FromArgb(48, 48, 48), Color.FromArgb(48, 48, 48));
-            imgAttr.SetColorKey(Color.FromArgb(56, 84, 109), Color.FromArgb(56, 84, 109));
+            //imgAttr.SetColorKey(Color.FromArgb(56, 84, 109), Color.FromArgb(56, 84, 109));
+            imgAttr.SetColorKey(Color.Black, Color.Black);
 
             if (bgImg != null)
             {

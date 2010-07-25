@@ -39,6 +39,7 @@
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PostView_MouseDown);
             this.Resize += new System.EventHandler(this.PostView_Resize);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PostView_MouseUp);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.PostView_KeyDown);
             this.ResumeLayout(false);
 
         }
