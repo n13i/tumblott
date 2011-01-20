@@ -1,6 +1,6 @@
 ﻿namespace Tumblott
 {
-    partial class MainForm
+    partial class ViewerForm
     {
         /// <summary>
         /// 必要なデザイナ変数です。
@@ -28,16 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.buttonsPanel = new System.Windows.Forms.UserControl();
-            this.progressStatusBar = new Tumblott.ProgressStatusBar();
-            this.postView = new Tumblott.Forms.PostView();
             this.nextButton = new Tumblott.Forms.ImageButton();
             this.reblogButton = new Tumblott.Forms.ImageButton();
             this.statusPanel = new Tumblott.Forms.StatusPanel();
             this.loadingIndicator = new Tumblott.Forms.LoadingIndicator();
             this.likeButton = new Tumblott.Forms.ImageButton();
             this.prevButton = new Tumblott.Forms.ImageButton();
+            this.progressStatusBar = new Tumblott.ProgressStatusBar();
+            this.postView = new Tumblott.Forms.PostView();
             this.buttonsPanel.SuspendLayout();
             this.statusPanel.SuspendLayout();
             this.SuspendLayout();
@@ -54,30 +53,6 @@
             this.buttonsPanel.Name = "buttonsPanel";
             this.buttonsPanel.Size = new System.Drawing.Size(240, 32);
             this.buttonsPanel.TabIndex = 4;
-            // 
-            // progressStatusBar
-            // 
-            this.progressStatusBar.BackColor = System.Drawing.Color.Black;
-            this.progressStatusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressStatusBar.ForeColor = System.Drawing.Color.Gainsboro;
-            this.progressStatusBar.Location = new System.Drawing.Point(0, 220);
-            this.progressStatusBar.Name = "progressStatusBar";
-            this.progressStatusBar.ProgressColor = System.Drawing.Color.SteelBlue;
-            this.progressStatusBar.Size = new System.Drawing.Size(240, 16);
-            this.progressStatusBar.TabIndex = 9;
-            // 
-            // postView
-            // 
-            this.postView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
-            this.postView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.postView.HideHeader = false;
-            this.postView.Location = new System.Drawing.Point(0, 0);
-            this.postView.Name = "postView";
-            this.postView.Size = new System.Drawing.Size(240, 236);
-            this.postView.TabIndex = 8;
-            this.postView.Title = null;
-            this.postView.FlipRequested += new System.Windows.Forms.MouseEventHandler(this.postView_FlipRequested);
-            this.postView.ImageClicked += new System.EventHandler(this.postView_ImageClicked);
             // 
             // nextButton
             // 
@@ -106,6 +81,7 @@
             this.statusPanel.ForeColor = System.Drawing.Color.WhiteSmoke;
             this.statusPanel.Location = new System.Drawing.Point(96, 0);
             this.statusPanel.Name = "statusPanel";
+            this.statusPanel.ShowMenuButton = false;
             this.statusPanel.Size = new System.Drawing.Size(48, 32);
             this.statusPanel.TabIndex = 4;
             // 
@@ -138,7 +114,32 @@
             this.prevButton.TabIndex = 0;
             this.prevButton.Click += new System.EventHandler(this.prevButton_Click);
             // 
-            // MainForm
+            // progressStatusBar
+            // 
+            this.progressStatusBar.BackColor = System.Drawing.Color.Black;
+            this.progressStatusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.progressStatusBar.ForeColor = System.Drawing.Color.Gainsboro;
+            this.progressStatusBar.IsProgressMode = false;
+            this.progressStatusBar.Location = new System.Drawing.Point(0, 216);
+            this.progressStatusBar.Name = "progressStatusBar";
+            this.progressStatusBar.ProgressColor = System.Drawing.Color.SteelBlue;
+            this.progressStatusBar.Size = new System.Drawing.Size(240, 20);
+            this.progressStatusBar.TabIndex = 9;
+            // 
+            // postView
+            // 
+            this.postView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.postView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.postView.HideHeader = false;
+            this.postView.Location = new System.Drawing.Point(0, 0);
+            this.postView.Name = "postView";
+            this.postView.Size = new System.Drawing.Size(240, 236);
+            this.postView.TabIndex = 8;
+            this.postView.Title = null;
+            this.postView.FlipRequested += new System.Windows.Forms.MouseEventHandler(this.postView_FlipRequested);
+            this.postView.ImageClicked += new System.EventHandler(this.postView_ImageClicked);
+            // 
+            // ViewerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
@@ -148,15 +149,15 @@
             this.Controls.Add(this.postView);
             this.Controls.Add(this.buttonsPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
-            this.Location = new System.Drawing.Point(0, 26);
-            this.Name = "MainForm";
+            this.Name = "ViewerForm";
             this.Text = "Tumblott";
             this.Deactivate += new System.EventHandler(this.MainForm_Deactivate);
             this.Activated += new System.EventHandler(this.MainForm_Activated);
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ViewerForm_KeyPress);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ViewerForm_KeyUp);
             this.Resize += new System.EventHandler(this.MainForm_Resize);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ViewerForm_KeyDown);
             this.buttonsPanel.ResumeLayout(false);
             this.statusPanel.ResumeLayout(false);
             this.ResumeLayout(false);

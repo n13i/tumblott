@@ -1,6 +1,6 @@
-﻿namespace Tumblott.Forms
+﻿namespace Tumblott
 {
-    partial class ImageView
+    partial class ScrollList
     {
         /// <summary> 
         /// 必要なデザイナ変数です。
@@ -28,21 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // ImageView
-            // 
-            this.Name = "ImageView";
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseMove);
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseDown);
-            this.Resize += new System.EventHandler(this.ImageView_Resize);
-            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ImageView_MouseUp);
-            this.ResumeLayout(false);
-
+            components = new System.ComponentModel.Container();
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
         }
 
         #endregion
-
-
     }
 }

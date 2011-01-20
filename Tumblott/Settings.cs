@@ -119,6 +119,23 @@ namespace Tumblott
             get { return (GetValue("showmenubar") == "1"); }
             set { instance["showmenubar"] = (value ? "1" : "0"); }
         }
+        public static int PostsLoadedAtOnce
+        {
+            get { return int.Parse(GetValue("postsloadedatonce")); }
+            set { instance["postsloadedatonce"] = value.ToString(); }
+        }
+        public static bool UseAlphaBlend
+        {
+            get { return (GetValue("usealphablend") == "1"); }
+            set { instance["usealphablend"] = (value ? "1" : "0"); }
+        }
+        public static int ZoomPercentDelta
+        {
+            get { return int.Parse(GetValue("zoompercentdelta")); }
+            set { instance["zoompercentdelta"] = value.ToString(); }
+        }
+
+        // ------------------------------------------------------------------
 
         public static string AppDataPath
         {
@@ -151,6 +168,11 @@ namespace Tumblott
                 string iniFileName = Path.ChangeExtension(Assembly.GetExecutingAssembly().ManifestModule.Name, "ini");
                 return Path.Combine(Settings.AppDataPath, iniFileName);
             }
+        }
+
+        public static string FontName
+        {
+            get { return "Tahoma"; }
         }
 
         private Settings()
@@ -215,7 +237,10 @@ namespace Tumblott
             Settings.DebugLog = false;
             Settings.ConnectionConfirmed = false;
             Settings.ThumbnailImageSize = ImageSize.Size250;
+            Settings.PostsLoadedAtOnce = 20;
             Settings.ShowMenuBar = true;
+            Settings.UseAlphaBlend = true;
+            Settings.ZoomPercentDelta = 10;
 
             Utils.ReadLine(Settings.FilePath, line =>
             {

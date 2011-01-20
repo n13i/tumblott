@@ -138,8 +138,8 @@
   <data name="General" xml:space="preserve">
     <value>General</value>
   </data>
-  <data name="LoadingDashboard" xml:space="preserve">
-    <value>Loading dashboard...</value>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
   </data>
   <data name="Menu" xml:space="preserve">
     <value>Menu</value>
@@ -196,11 +196,10 @@
     <value>Always confirm when open links</value>
   </data>
   <data name="ProxyOnlyImages" xml:space="preserve">
-    <value>Use proxy only for loading images
-(Useful with an image compression proxy)</value>
+    <value>Use proxy only for loading images (Useful with an image compression proxy)</value>
   </data>
   <data name="SettingsWindowTitle" xml:space="preserve">
-    <value>Settings</value>
+    <value>Settings - Tumblott</value>
   </data>
   <data name="AppliedAfterRestart" xml:space="preserve">
     <value>The changes below are applied after restart.</value>
@@ -210,5 +209,23 @@
   </data>
   <data name="ThumbnailImageSize" xml:space="preserve">
     <value>Thumbnail image size</value>
+  </data>
+  <data name="PostsAreLoadedAtOnce" xml:space="preserve">
+    <value>Posts are loaded at once</value>
+  </data>
+  <data name="ConfirmRetryLoading" xml:space="preserve">
+    <value>Failed to load. Retry?</value>
+  </data>
+  <data name="LoadError" xml:space="preserve">
+    <value>Load Error</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Processing...</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="GeneralSetting" xml:space="preserve">
+    <value>General Settings</value>
   </data>
 </root>

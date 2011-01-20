@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PhotoForm));
             this.loadingIndicator = new Tumblott.Forms.LoadingIndicator();
             this.imageView = new Tumblott.Forms.ImageView();
             this.SuspendLayout();
@@ -60,7 +59,6 @@
             this.Controls.Add(this.loadingIndicator);
             this.Controls.Add(this.imageView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimizeBox = false;
             this.Name = "PhotoForm";
             this.Text = "Photo";

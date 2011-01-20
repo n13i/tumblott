@@ -8,6 +8,14 @@ using System.Windows.Forms;
 
 namespace Tumblott
 {
+    class NotifyItem
+    {
+        public string Text;
+        public Image Image;
+        public int Timeout;
+        public Guid Guid;
+    }
+
     /*
      * priority
      * timeout
@@ -15,11 +23,30 @@ namespace Tumblott
      */
     public partial class ProgressStatusBar : UserControl, IDisposable
     {
+        private SizeF scaleFactor;
+
         private string text;
         private int value;
 
         private Image offImg;
         private Graphics offImgGr;
+
+        private List<NotifyItem> notifyList;
+
+        private bool isProgressMode = false;
+
+        public bool IsProgressMode
+        {
+            set
+            {
+                this.isProgressMode = value;
+                this.SwitchVisibility(value);
+            }
+            get
+            {
+                return this.isProgressMode;
+            }
+        }
 
         public int Value
         {
@@ -44,6 +71,74 @@ namespace Tumblott
         public ProgressStatusBar()
         {
             InitializeComponent();
+            this.notifyList = new List<NotifyItem>();
+        }
+
+        public void AddNotify(Guid guid, Image img, string text, int timeout)
+        {
+            Image scaledImg = null;
+            if (img != null)
+            {
+                scaledImg = Utils.GetScaledImage(img, (int)(16 * this.scaleFactor.Width), (int)(16 * this.scaleFactor.Height), Utils.ScaleMode.Fit);
+            }
+
+            this.SwitchVisibility(true);
+            this.notifyList.Add(new NotifyItem { Guid = guid, Image = scaledImg, Text = text, Timeout = timeout });
+            Utils.DebugLog("notifylist add: guid = " + guid);
+            this.Invalidate();
+        }
+
+        public void ChangeNotify(Guid guid, string text, int timeout)
+        {
+            for(int i = 0; i < this.notifyList.Count; i++)
+            {
+                if (this.notifyList[i].Guid.Equals(guid))
+                {
+                    this.notifyList[i].Text = text;
+                    this.notifyList[i].Timeout = timeout;
+                    this.Invalidate();
+                    break;
+                }
+            }
+        }
+
+        public void RemoveNotify(Guid guid)
+        {
+            for(int i = 0; i < this.notifyList.Count; i++)
+            {
+                if (this.notifyList[i].Guid.Equals(guid))
+                {
+                    Utils.DebugLog("notifylist remove: guid = " + guid);
+                    if (this.notifyList[i].Image != null)
+                    {
+                        this.notifyList[i].Image.Dispose();
+                    }
+                    this.notifyList.RemoveAt(i);
+                    this.Invalidate();
+                    break;
+                }
+            }
+
+            if (this.notifyList.Count == 0)
+            {
+                this.SwitchVisibility(false);
+            }
+        }
+
+        public void SwitchVisibility(bool visible)
+        {
+            if (visible)
+            {
+                this.Visible = true;
+            }
+            else
+            {
+                if (this.notifyList.Count == 0 && !this.isProgressMode)
+                {
+                    this.Visible = false;
+                    this.Invalidate();
+                }
+            }
         }
 
         public new void Dispose()
@@ -57,6 +152,12 @@ namespace Tumblott
                 offImg.Dispose();
             }
             base.Dispose();
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            this.scaleFactor = factor;
+            base.ScaleControl(factor, specified);
         }
 
         protected override void OnResize(EventArgs e)
@@ -80,8 +181,6 @@ namespace Tumblott
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            float ratio = e.Graphics.DpiX / 192F; 
-            
             SolidBrush bBack = new SolidBrush(this.BackColor);
             SolidBrush bBar = new SolidBrush(this.ProgressColor);
             SolidBrush bText = new SolidBrush(this.ForeColor);
@@ -114,6 +213,21 @@ namespace Tumblott
                 (float)(this.Width - Math.Floor(textSize.Width)) / 2,
                 //ratio * 4,
                 (float)(this.Height - Math.Floor(textSize.Height)) / 2);
+
+            if (this.notifyList.Count > 0)
+            {
+                for (int i = 0; i < this.notifyList.Count; i++)
+                {
+                    Image notifyImg = this.notifyList[i].Image;
+                    string notifyText = this.notifyList[i].Text;
+                    if (notifyImg != null)
+                    {
+                        offImgGr.DrawImage(notifyImg, (int)((1 + i * 60) * this.scaleFactor.Width), (this.Height - notifyImg.Height) / 2);
+                    }
+                    textSize = offImgGr.MeasureString(notifyText, this.Font);
+                    offImgGr.DrawString(this.notifyList[i].Text, this.Font, bText, (int)(18 + i * 60) * this.scaleFactor.Width, (float)(this.Height - Math.Floor(textSize.Height)) / 2);
+                }
+            }
 
             e.Graphics.DrawImage(offImg, 0, 0);
         }

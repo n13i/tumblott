@@ -547,5 +547,14 @@ namespace Tumblott
                 System.Diagnostics.Debug.WriteLine(value);
             }
         }
+
+        // cf. http://www.atmarkit.co.jp/fdotnet/dotnettips/980unixtime/unixtime.html
+        private static DateTime UNIX_EPOCH = new DateTime(1970, 1, 1, 0, 0, 0);
+        public static long GetUnixTime(DateTime dt)
+        {
+            DateTime dtUtc = dt.ToUniversalTime();
+            TimeSpan elapsed = dtUtc - UNIX_EPOCH;
+            return (long)elapsed.TotalSeconds;
+        }
     }
 }

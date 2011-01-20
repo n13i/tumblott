@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
 using Tumblott.Client.Tumblr;
 using Tumblott.TextViewer;
+using M2HQ.Utils;
+using M2HQ.Drawing;
 
 namespace Tumblott.Forms
 {
@@ -31,11 +34,13 @@ namespace Tumblott.Forms
         private Image scaledImg;
         private Image avatarImg;
         private Size avatarImgSize = new Size(32, 32);
-        private Image loadingImg;
 
         private Image offBuf;
-        private Image frameTop;
-        private Image frameBottom;
+        private Image loadingImg;
+        private Image headerImg;
+        private Image frameTopImg;
+        private Image frameBottomImg;
+        private Image splashImg;
         private SizeF scaleFactor = new SizeF(1, 1);
 
         private Rectangle scrollArea = new Rectangle();
@@ -47,7 +52,7 @@ namespace Tumblott.Forms
         private Rectangle pictureViewArea = new Rectangle();
 
         private Point tapPosition = new Point();
-        private Point prevTapPostion = new Point();
+        private Point prevTapPosition = new Point();
 
         private Thread thread;
 
@@ -58,6 +63,10 @@ namespace Tumblott.Forms
         private bool isFlipping = false;
         private Point flipOffset;
         private Velocity flipVelocity;
+
+        private bool isTransiting = false;
+        private int transitCount = 0;
+        private int transitCountMax = 20;
 
         private Object lockObj = new Object();
 
@@ -96,7 +105,7 @@ namespace Tumblott.Forms
         {
             set
             {
-                post = value;
+                this.post = value;
                 if (renderedImg != null)
                 {
                     renderedImg.Dispose();
@@ -112,12 +121,17 @@ namespace Tumblott.Forms
                     avatarImg.Dispose();
                     avatarImg = null;
                 }
+                if (headerImg != null)
+                {
+                    headerImg.Dispose();
+                    headerImg = null;
+                }
 
                 //this.ResetPosition();
 
                 this.renderer.Document.Dispose();
                 this.renderer.Document = new TextDocument();
-                Parse(this.renderer.Document, post.Html);
+                Parse(this.renderer.Document, this.post.Html);
                 Invalidate();
             }
         }
@@ -136,7 +150,7 @@ namespace Tumblott.Forms
             this.ContextMenu.Popup +=new EventHandler(ContextMenu_Popup);
             // コンテキストメニュー項目の作成は ContextMenu_Popup 内で行う
 
-            post = null;
+            this.post = null;
 
             isMouseDown = false;
             isScrolling = false;
@@ -185,15 +199,16 @@ namespace Tumblott.Forms
         /// </summary>
         private void Animate()
         {
-            Point delta = new Point(0, 0);
-
             while (true)
             {
-                if (isFlipping)
+                if (this.isFlipping)
                 {
                     this.BeginInvoke(new Action<int>(DoFlip), 0);
                 }
-
+                if (this.isTransiting)
+                {
+                    this.BeginInvoke(new Action<int>(DoTransit), 0);
+                }
                 Thread.Sleep(33); // expects 30fps
             }
         }
@@ -252,7 +267,7 @@ namespace Tumblott.Forms
 
         private void DoFlip(int dummy)
         {
-            if (isFlipping)
+            if (this.isFlipping)
             {
                 flipOffset.X += (int)(flipVelocity.X);
                 flipOffset.Y += (int)(flipVelocity.Y);
@@ -271,9 +286,32 @@ namespace Tumblott.Forms
             Invalidate();
         }
 
+        public void StartTransit()
+        {
+            this.transitCount = 0;
+            this.isTransiting = true;
+        }
+
+        private void DoTransit(int dummy)
+        {
+            if (this.isTransiting)
+            {
+                if (this.transitCount >= this.transitCountMax)
+                {
+                    this.isTransiting = false;
+                    this.transitCount = 0;
+                }
+                else
+                {
+                    this.transitCount++;
+                }
+            }
+            Invalidate();
+        }
+
         private void PostView_MouseDown(object sender, MouseEventArgs e)
         {
-            if (post != null && !isMouseDown)
+            if (this.post != null && !isMouseDown)
             {
                 tappedPoint.X = e.X;
                 tappedPoint.Y = e.Y;
@@ -282,8 +320,8 @@ namespace Tumblott.Forms
 
                 tapPosition.X = e.X;
                 tapPosition.Y = e.Y;
-                prevTapPostion.X = e.X;
-                prevTapPostion.Y = e.Y;
+                prevTapPosition.X = e.X;
+                prevTapPosition.Y = e.Y;
                 //scrollVelocity.X = 0;
                 //scrollVelocity.Y = 0;
 
@@ -355,6 +393,8 @@ namespace Tumblott.Forms
         {
             isMouseDown = false;
 
+            // FIXME 長タップしてコンテキストメニューが表示される際，MouseDownが発生しないようなので
+            // tapPositionが実際の位置と異なる
             if (textViewArea.Contains(tapPosition.X, tapPosition.Y))
             {
                 Point p = new Point();
@@ -427,7 +467,7 @@ namespace Tumblott.Forms
 #endif
 
         // deltaで与えた分だけスクロールさせる
-        private void Scroll(Point delta)
+        public void Scroll(Point delta)
         {
             bool isScrollable = true;
 
@@ -475,14 +515,14 @@ namespace Tumblott.Forms
             // 100x16 @ 192dpi
             Image frameShadowImg = global::Tumblott.Properties.Resources.frame_shadow;
 
-            this.frameTop = new Bitmap(this.Width - (int)(4 * scaleFactor.Width), (int)(frameShadowImg.Height * 0.5 * scaleFactor.Height), System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+            this.frameTopImg = new Bitmap(this.Width - (int)(4 * scaleFactor.Width), (int)(frameShadowImg.Height * 0.5 * scaleFactor.Height), System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
 
             Rectangle dstRect, srcRect;
 
-            using (Graphics g = Graphics.FromImage(frameTop))
+            using (Graphics g = Graphics.FromImage(frameTopImg))
             {
                 srcRect = new Rectangle(0, 0, frameShadowImg.Width, frameShadowImg.Height);
-                for (int x = 0; x < this.frameTop.Width; x += (int)(frameShadowImg.Width * 0.5))
+                for (int x = 0; x < this.frameTopImg.Width; x += (int)(frameShadowImg.Width * 0.5))
                 {
                     dstRect = new Rectangle(x, 0, (int)(frameShadowImg.Width * 0.5 * scaleFactor.Width), (int)(frameShadowImg.Height * 0.5 * scaleFactor.Height));
 
@@ -491,6 +531,84 @@ namespace Tumblott.Forms
             }
 
             loadingImg = global::Tumblott.Properties.Resources.image_loading;
+
+            // ヘッダ部
+            if (headerImg == null)
+            {
+                int headerHeight = (int)((4 + this.avatarImgSize.Height) * scaleFactor.Height);
+
+                // ヘッダ部と白い領域の間
+                headerHeight += this.frameTopImg.Height;
+
+                headerImg = new Bitmap(this.Width, headerHeight, System.Drawing.Imaging.PixelFormat.Format16bppRgb565);
+            }
+
+            using (Graphics g = Graphics.FromImage(headerImg))
+            {
+                SolidBrush bBgColor = new SolidBrush(this.BackColor);
+                SolidBrush bWhite = new SolidBrush(Color.White);
+                SolidBrush bDescColor = new SolidBrush(Color.FromArgb(153, 153, 153));
+                SolidBrush bBgTitleColor = new SolidBrush(Color.FromArgb(64, 64, 64));
+
+                g.FillRectangle(bBgColor, 0, 0, this.headerImg.Width, this.headerImg.Height);
+
+                // 現在のビュー("dashboard"等)
+                Font font;
+                SizeF size;
+                if (this.post != null)
+                {
+                    font = new Font(Settings.FontName, 24F, FontStyle.Regular);
+                    size = g.MeasureString("dashboard", font);
+                    g.DrawString("dashboard", font, bBgTitleColor, this.headerImg.Width - (int)size.Width + (12 * scaleFactor.Width), -(12 * scaleFactor.Height));
+                    font.Dispose();
+                }
+
+                // username
+                font = new Font(Settings.FontName, 10F, FontStyle.Bold);
+                size = g.MeasureString("X", font);
+                g.DrawString(this.Title, font, bWhite, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, (4 * scaleFactor.Height));
+                font.Dispose();
+
+                // rebbloged hogehoge
+                int desclineY = (int)(5 * scaleFactor.Height) + (int)size.Height;
+                font = new Font(Settings.FontName, 8F, FontStyle.Bold);
+                g.DrawString(this.Text, font, bDescColor, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, desclineY);
+
+                font.Dispose();
+
+                bBgColor.Dispose();
+                bWhite.Dispose();
+                bDescColor.Dispose();
+                bBgTitleColor.Dispose();
+            }
+
+            // スプラッシュ
+            if (this.splashImg == null)
+            {
+                // tumblott_splashは192dpi(scaleFactor=2)で作成
+                Image srcImg = global::Tumblott.Properties.Resources.tumblott_splash;
+
+                // 現在のdpiにあわせる
+                this.splashImg = new Bitmap((int)(srcImg.Width * this.scaleFactor.Width / 2), (int)(srcImg.Height * this.scaleFactor.Height / 2), PixelFormat.Format16bppRgb565);
+
+                using (Graphics g = Graphics.FromImage(splashImg))
+                {
+                    g.DrawImage(srcImg, new Rectangle(0, 0, this.splashImg.Width, this.splashImg.Height), new Rectangle(0, 0, srcImg.Width, srcImg.Height), GraphicsUnit.Pixel);
+
+                    SolidBrush bDescColor = new SolidBrush(Color.FromArgb(153, 153, 153));
+
+                    string version = "Ver." + Utils.GetExecutingAssemblyVersion() + " (" + Utils.GetBuiltDateTime().ToString("yyyy/MM/dd") + ")";
+                    Font font = new Font(Settings.FontName, 9F, FontStyle.Regular);
+                    SizeF size = g.MeasureString(version, font);
+                    g.DrawString(version, font, bDescColor, (this.splashImg.Width - size.Width) / 2, this.splashImg.Height - size.Height);
+                    font.Dispose();
+
+                    bDescColor.Dispose();
+                }
+
+                // FIXME ResourceをDisposeしてもいいの？
+                //srcImg.Dispose();
+            }
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -501,7 +619,7 @@ namespace Tumblott.Forms
                 Utils.DebugLog("PostView: offBuf created, w=" + this.Width.ToString() + ", h=" + this.Height.ToString());
             }
 
-            if (frameTop == null)
+            if (frameTopImg == null || headerImg == null)
             {
                 PrepareImages(e.Graphics);
             }
@@ -511,7 +629,6 @@ namespace Tumblott.Forms
             SolidBrush bBgColor = new SolidBrush(this.BackColor);
             SolidBrush bWhite = new SolidBrush(Color.White);
             SolidBrush bDescColor = new SolidBrush(Color.FromArgb(153, 153, 153));
-            SolidBrush bAvatarBG = new SolidBrush(Color.Black);
 
             // まずは背景を塗りつぶす
             g.FillRectangle(bBgColor, 0, 0, this.Width, this.Height);
@@ -520,52 +637,37 @@ namespace Tumblott.Forms
             int headerHeight = 0;
             if (!this.HideHeader)
             {
-                // アバター画像部
-                g.FillRectangle(bAvatarBG, (int)(2 * scaleFactor.Width), (int)(4 * scaleFactor.Height) + drawPos.Y, (int)(this.avatarImgSize.Width * scaleFactor.Width), (int)(this.avatarImgSize.Height * scaleFactor.Height));
-
-                Font font = new Font("Tahoma", 10F, FontStyle.Bold);
-                SizeF size = g.MeasureString("X", font);
-                g.DrawString(this.Title, font, bWhite, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, (4 * scaleFactor.Height) + drawPos.Y);
-                font.Dispose();
-
-                font = new Font("Tahoma", 8F, FontStyle.Bold);
-                //SizeF size = g.MeasureString("X", font);
-                g.DrawString(this.Text, font, bDescColor, (2 + this.avatarImgSize.Width + 2) * scaleFactor.Width, (5 * scaleFactor.Height) + size.Height + drawPos.Y);
-                font.Dispose();
-
-                //int headerHeight = (int)(size.Height + (4*imgScale));
-                headerHeight = (int)((4 + this.avatarImgSize.Height) * scaleFactor.Height);
-
-                // ヘッダ部と白い領域の間
-                headerHeight += this.frameTop.Height;
+                g.DrawImage(this.headerImg, 0, drawPos.Y);
+                headerHeight = this.headerImg.Height;
             }
 
-            // 白い領域
-            Rectangle drawArea = new Rectangle();
-            drawArea.X = (int)(2 * scaleFactor.Width);
-            drawArea.Y = headerHeight + (int)(2 * scaleFactor.Height);
-            drawArea.Width = this.Width - (int)(4 * scaleFactor.Width);
-            drawArea.Height = (int)(16 * scaleFactor.Height);
-            // 白い領域内の描画エリア
-            Rectangle drawInnerArea = new Rectangle();
-            drawInnerArea.X = drawArea.X + (int)(8 * scaleFactor.Width);
-            drawInnerArea.Y = drawArea.Y + (int)(8 * scaleFactor.Height);
-            drawInnerArea.Width = drawArea.Width - (int)(16 * scaleFactor.Width);
-            drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
-
-            int pictureFramePadding = (int)(4 * scaleFactor.Width);
-
-            int textPosY = 0;
-
-            if (post != null)
+            // postがセットされていない場合，以下の描画は行わない
+            if (this.post != null)
             {
-                if (post.Type == TumblrPost.Types.Photo)
+                // 白い領域
+                Rectangle drawArea = new Rectangle();
+                drawArea.X = (int)(2 * scaleFactor.Width);
+                drawArea.Y = headerHeight + (int)(2 * scaleFactor.Height);
+                drawArea.Width = this.Width - (int)(4 * scaleFactor.Width);
+                drawArea.Height = (int)(16 * scaleFactor.Height);
+                // 白い領域内の描画エリア
+                Rectangle drawInnerArea = new Rectangle();
+                drawInnerArea.X = drawArea.X + (int)(8 * scaleFactor.Width);
+                drawInnerArea.Y = drawArea.Y + (int)(8 * scaleFactor.Height);
+                drawInnerArea.Width = drawArea.Width - (int)(16 * scaleFactor.Width);
+                drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
+
+                int pictureFramePadding = (int)(4 * scaleFactor.Width);
+
+                int textPosY = 0;
+
+                if (this.post.Type == TumblrPost.Types.Photo)
                 {
-                    if (post.Image != null)
+                    if (this.post.Image != null)
                     {
                         if (scaledImg == null)
                         {
-                            scaledImg = Utils.GetScaledImage(post.Image, drawInnerArea.Width - pictureFramePadding * 2, this.Height - pictureFramePadding * 2 - drawInnerArea.Y, Utils.ScaleMode.Fit);
+                            scaledImg = Utils.GetScaledImage(this.post.Image, drawInnerArea.Width - pictureFramePadding * 2, this.Height - pictureFramePadding * 2 - drawInnerArea.Y, Utils.ScaleMode.Fit);
                         }
                         textPosY += scaledImg.Height + pictureFramePadding * 2;
                         drawArea.Height += scaledImg.Height + pictureFramePadding * 2;
@@ -580,11 +682,11 @@ namespace Tumblott.Forms
                     }
                 }
 
-                if (post.AvatarImage != null)
+                if (this.post.AvatarImage != null)
                 {
                     if (avatarImg == null)
                     {
-                        avatarImg = Utils.GetScaledImage(post.AvatarImage, (int)(this.avatarImgSize.Width * scaleFactor.Width), (int)(this.avatarImgSize.Height * scaleFactor.Height), Utils.ScaleMode.Full);
+                        avatarImg = Utils.GetScaledImage(this.post.AvatarImage, (int)(this.avatarImgSize.Width * scaleFactor.Width), (int)(this.avatarImgSize.Height * scaleFactor.Height), Utils.ScaleMode.Full);
                     }
                 }
 
@@ -601,32 +703,29 @@ namespace Tumblott.Forms
                     drawArea.Height += renderedImg.Height;
                     drawInnerArea.Height += renderedImg.Height;
                 }
-            }
 
-            // 小さい場合，吹き出しの形が崩れないサイズにする
-            if (drawArea.Height < (int)(28 * scaleFactor.Height))
-            {
-                drawArea.Height = (int)(28 * scaleFactor.Height);
-                drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
-            }
+                // 小さい場合，吹き出しの形が崩れないサイズにする
+                if (drawArea.Height < (int)(28 * scaleFactor.Height))
+                {
+                    drawArea.Height = (int)(28 * scaleFactor.Height);
+                    drawInnerArea.Height = drawArea.Height - (int)(16 * scaleFactor.Height);
+                }
 
-            // ヘッダと描画部の間
-            if (!this.HideHeader)
-            {
-                g.DrawImage(this.frameTop, (int)(2 * scaleFactor.Width), drawArea.Y - this.frameTop.Height + drawPos.Y);
-            }
-            // 描画部(白いエリア)
-            g.FillRectangle(bWhite, drawArea.X, drawArea.Y + drawPos.Y, drawArea.Width, drawArea.Height);
+                // ヘッダと描画部の間
+                if (!this.HideHeader)
+                {
+                    g.DrawImage(this.frameTopImg, (int)(2 * scaleFactor.Width), drawArea.Y - this.frameTopImg.Height + drawPos.Y);
+                }
+                // 描画部(白いエリア)
+                g.FillRectangle(bWhite, drawArea.X, drawArea.Y + drawPos.Y, drawArea.Width, drawArea.Height);
 
-            if (post != null)
-            {
                 // ヘッダ部にアバター画像を表示
                 if (avatarImg != null && !this.HideHeader)
                 {
                     g.DrawImage(avatarImg, (int)(2 * scaleFactor.Width), (int)(4 * scaleFactor.Height) + drawPos.Y);
                 }
                 // Photo を表示
-                if (post.Type == TumblrPost.Types.Photo)
+                if (this.post.Type == TumblrPost.Types.Photo)
                 {
                     Image img = null;
                     if (scaledImg != null)
@@ -659,13 +758,18 @@ namespace Tumblott.Forms
                     g.DrawRectangle(p, textViewArea);
                 }
                 */
-            }
 
-            // フリックスレッド向けに値を設定
-            scrollArea.X = 0;
-            scrollArea.Y = 0;
-            scrollArea.Width = this.Width;
-            scrollArea.Height = headerHeight + drawArea.Height + (int)(12 * scaleFactor.Height) + (int)(16 * scaleFactor.Height); // 32 は若干の余裕
+                // フリックスレッド向けに値を設定
+                scrollArea.X = 0;
+                scrollArea.Y = 0;
+                scrollArea.Width = this.Width;
+                scrollArea.Height = headerHeight + drawArea.Height + (int)(12 * scaleFactor.Height) + (int)(16 * scaleFactor.Height); // 32 は若干の余裕
+            }
+            else
+            {
+                // スプラッシュ画面
+                g.DrawImage(this.splashImg, (this.Width - this.splashImg.Width) / 2, (this.Height - this.splashImg.Height) / 2);
+            }
 
             // スクロールバーを描画
             if(isScrolling || scroller.IsScrolling)
@@ -673,31 +777,39 @@ namespace Tumblott.Forms
                 int sbHeight = offBuf.Height * offBuf.Height / scrollArea.Height;
                 int sbPosY = -drawPos.Y * offBuf.Height / scrollArea.Height;
 
-                Point[] points = {
-                                     new Point(this.Width-1, sbPosY-(int)(4*scaleFactor.Height)),
-                                     new Point(this.Width-(int)(4*scaleFactor.Width), sbPosY),
-                                     new Point(this.Width-(int)(4*scaleFactor.Width), sbPosY+sbHeight),
-                                     new Point(this.Width-1, sbPosY+sbHeight+(int)(4*scaleFactor.Height)),
-                                 };
+                SolidBrush bBack = new SolidBrush(Color.FromArgb(144, 144, 144));
+                SolidBrush bFore = new SolidBrush(Color.FromArgb(96, 96, 96));
 
-                Pen p = new Pen(Color.Black);
-                SolidBrush b = new SolidBrush(Color.Gray);
-                //g.FillRectangle(b, this.Width - (int)(4 * imgScale), sbPosY, (int)(4 * imgScale), sbHeight);
-                g.FillPolygon(b, points);
-                g.DrawPolygon(p, points);
-
-                p.Dispose();
-                b.Dispose();
+                g.FillRectangle(bBack, this.Width - (int)(4 * this.scaleFactor.Width), 0,      (int)(4 * this.scaleFactor.Width), this.Height);
+                g.FillRectangle(bFore, this.Width - (int)(4 * this.scaleFactor.Width), sbPosY, (int)(4 * this.scaleFactor.Width), sbHeight + 1);
+                bBack.Dispose();
+                bFore.Dispose();
             }
 
             // フリップ動作中
-            if (isFlipping && flipOffBuf != null)
+            if (this.isFlipping && flipOffBuf != null)
             {
-                g.DrawImage(flipOffBuf, flipOffset.X, flipOffset.Y);
+                if (Settings.UseAlphaBlend)
+                {
+                    int alpha = 192 - (Math.Abs(flipOffset.X) * 128 / this.Width);
+                    AlphaBlend.DrawImage(g, flipOffBuf, flipOffset.X, flipOffset.Y, alpha);
+                }
+                else
+                {
+                    g.DrawImage(flipOffBuf, flipOffset.X, flipOffset.Y);
+                }
             }
 
             // オフスクリーンバッファを画面へ描画
-            e.Graphics.DrawImage(offBuf, 0, 0);
+            if (this.isTransiting && Settings.UseAlphaBlend)
+            {
+                int alpha = 255 * this.transitCount / this.transitCountMax;
+                AlphaBlend.DrawImage(e.Graphics, offBuf, 0, 0, alpha);
+            }
+            else
+            {
+                e.Graphics.DrawImage(offBuf, 0, 0);
+            }
 
             if (Settings.DebugLog)
             {
@@ -707,7 +819,8 @@ namespace Tumblott.Forms
             bBgColor.Dispose();
             bWhite.Dispose();
             bDescColor.Dispose();
-            bAvatarBG.Dispose();
+            //bAvatarBG.Dispose();
+            //bBgTitleColor.Dispose();
             g.Dispose();
         }
 
@@ -804,15 +917,20 @@ namespace Tumblott.Forms
                 offBuf.Dispose();
                 offBuf = null;
             }
-            if (frameTop != null)
+            if (frameTopImg != null)
             {
-                frameTop.Dispose();
-                frameTop = null;
+                frameTopImg.Dispose();
+                frameTopImg = null;
             }
-            if (frameBottom != null)
+            if (frameBottomImg != null)
             {
-                frameBottom.Dispose();
-                frameBottom = null;
+                frameBottomImg.Dispose();
+                frameBottomImg = null;
+            }
+            if (headerImg != null)
+            {
+                headerImg.Dispose();
+                headerImg = null;
             }
             if (renderedImg != null)
             {

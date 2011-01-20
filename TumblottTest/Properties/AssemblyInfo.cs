@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。
 // アセンブリに関連付けられている情報を変更するには、
 // これらの属性値を変更してください。
-[assembly: AssemblyTitle("Tumblott")]
-[assembly: AssemblyDescription("An unofficial Tumblr browser for Windows Mobile")]
+[assembly: AssemblyTitle("TumblottTest")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Tumblott")]
-[assembly: AssemblyCopyright("Copyright © 2010 n13i@m2hq.net. All rights reserved.")]
+[assembly: AssemblyProduct("TumblottTest")]
+[assembly: AssemblyCopyright("Copyright ©  2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // 次の GUID は、このプロジェクトが COM に公開される場合の、typelib の ID です
-[assembly: Guid("15197a8f-aa21-44c4-9381-cd293b60be11")]
+[assembly: Guid("4ac0d1d7-9a98-4bd8-9ac0-fea8a6f80215")]
 
 // アセンブリのバージョン情報は、以下の 4 つの値で構成されています:
 //
@@ -31,5 +31,6 @@ using System.Runtime.InteropServices;
 //
 // すべての値を指定するか、下のように '*' を使ってビルドおよびリビジョン番号を 
 // 既定値にすることができます:
-[assembly: AssemblyVersion("0.59.*")]
-[assembly: AssemblyInformationalVersion("0.59.0.$WCREV$")]
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

@@ -138,8 +138,8 @@
   <data name="General" xml:space="preserve">
     <value>一般</value>
   </data>
-  <data name="LoadingDashboard" xml:space="preserve">
-    <value>dashboard を取得中...</value>
+  <data name="Loading" xml:space="preserve">
+    <value>受信中...</value>
   </data>
   <data name="Menu" xml:space="preserve">
     <value>メニュー</value>
@@ -196,11 +196,10 @@
     <value>リンクを開く際に常に確認する</value>
   </data>
   <data name="ProxyOnlyImages" xml:space="preserve">
-    <value>画像の受信だけにプロキシを使用する
-(画像圧縮プロキシを使うときに便利です)</value>
+    <value>画像の受信だけにプロキシを使用する (画像圧縮プロキシを使うときに便利です)</value>
   </data>
   <data name="SettingsWindowTitle" xml:space="preserve">
-    <value>設定</value>
+    <value>設定 - Tumblott</value>
   </data>
   <data name="AppliedAfterRestart" xml:space="preserve">
     <value>以下の変更は再起動後に反映されます。</value>
@@ -210,5 +209,23 @@
   </data>
   <data name="ThumbnailImageSize" xml:space="preserve">
     <value>サムネイル画像サイズ</value>
+  </data>
+  <data name="PostsAreLoadedAtOnce" xml:space="preserve">
+    <value>一度に読み込むPostの数</value>
+  </data>
+  <data name="ConfirmRetryLoading" xml:space="preserve">
+    <value>受信に失敗しました。再試行しますか？</value>
+  </data>
+  <data name="LoadError" xml:space="preserve">
+    <value>受信エラー</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>処理中...</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>再読み込み</value>
+  </data>
+  <data name="GeneralSetting" xml:space="preserve">
+    <value>一般設定</value>
   </data>
 </root>

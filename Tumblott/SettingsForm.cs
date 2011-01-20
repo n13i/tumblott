@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Reflection;
+using M2HQ.Utils;
 
 namespace Tumblott
 {
@@ -28,6 +29,8 @@ namespace Tumblott
             MenuItem miCancel = new MenuItem { Text = Messages.Cancel };
             miCancel.Click += new EventHandler(miCancel_Click);
             Menu.MenuItems.Add(miCancel);
+
+            VisualStyle.ApplyVisualStyle(this);
         }
 
         private void SettingsForm_Load(object sender, EventArgs e)
@@ -47,7 +50,7 @@ namespace Tumblott
             this.copyrightLabel.Text = ((AssemblyCopyrightAttribute)copyright).Copyright;
 
             // icon
-            this.iconPictureBox.Image = global::Tumblott.Properties.Resources.tumblott_icon;
+            this.iconPictureBox.Image = global::Tumblott.Properties.Resources.tumblott_icon_90;
 
             // ------------------------------------------------------------------ [Account] page
             this.emailTextBox.Text = Settings.Email;
@@ -60,6 +63,12 @@ namespace Tumblott
 
             // ------------------------------------------------------------------ [General] page
             this.openLinkCheckBox.Checked = Settings.IsConfirmWhenOpenLinks;
+
+            // FIXME 別のところで設定すべき？
+            this.postsNumericUpDown.Maximum = 50;
+            this.postsNumericUpDown.Minimum = 2;
+
+            this.postsNumericUpDown.Value = Settings.PostsLoadedAtOnce;
 
             int[] sizes = { 75, 100, 250, 400, 500, 1280 };
             foreach (int n in sizes)
@@ -74,7 +83,9 @@ namespace Tumblott
             this.showMenuBarCheckBox.Checked = Settings.ShowMenuBar;
 
             // Translations
+            this.generalLabel.Text = Messages.GeneralSetting;
             this.openLinkCheckBox.Text = Messages.OpenLinkConfirm;
+            this.postsLabel.Text = Messages.PostsAreLoadedAtOnce;
             this.thumbImageSizeLabel.Text = Messages.ThumbnailImageSize;
             this.appliedAfterRestartLabel.Text = Messages.AppliedAfterRestart;
             this.showMenuBarCheckBox.Text = Messages.ShowMenuBar;
@@ -144,6 +155,8 @@ namespace Tumblott
 
                 // ------------------------------------------------------------------ [General] page
                 Settings.IsConfirmWhenOpenLinks = this.openLinkCheckBox.Checked;
+
+                Settings.PostsLoadedAtOnce = (int)(this.postsNumericUpDown.Value);
 
                 int idx = this.thumbImageSizeComboBox.SelectedIndex;
                 switch ((int)this.thumbImageSizeComboBox.Items[idx])

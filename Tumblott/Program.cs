@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Threading;
+using Tumblott.Forms;
 
 namespace Tumblott
 {
@@ -25,7 +26,9 @@ namespace Tumblott
             // マニュアルスレッド用の集約例外ハンドラ
             //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            Application.Run(new MainForm());
+            Settings.Load();
+            Application.Run(new ViewerForm());
+            //Application.Run(new SettingsForm());
 
             mutex.ReleaseMutex();
         }

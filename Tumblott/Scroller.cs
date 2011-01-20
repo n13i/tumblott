@@ -4,11 +4,11 @@ using System.Text;
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace Tumblott.Forms
+namespace M2HQ.Utils
 {
     // ドラッグでのスクロール，フリック，長タップでのズームなどを実現させたいクラス
     // 参考: YOPViewer.NETのDragClickクラス
-    public class Scroller
+    public class Scroller : IDisposable
     {
         private struct Velocity { public double X; public double Y; }
 
@@ -28,10 +28,14 @@ namespace Tumblott.Forms
         private int zoomWait;
         private bool isZooming;
 
+        private const int zoomWaitThreshold = 10;
+
         public event MouseEventHandler Scroll;
         public event EventHandler ScrollStopped;
         public event MouseEventHandler Flick;
         public event MouseEventHandler Zoom;
+        public event EventHandler ZoomStopped;
+        public event MouseEventHandler Tapped;
 
         public bool IsScrolling { get { return this.scrollTimer.Enabled; } }
 
@@ -57,6 +61,7 @@ namespace Tumblott.Forms
         // for debug
         public void DrawStatus(Graphics g)
         {
+#if false
             if (Settings.DebugLog)
             {
                 g.DrawString("md=" + this.isMouseDown.ToString() + ", fl=" + this.scrollTimer.Enabled.ToString() +
@@ -64,6 +69,7 @@ namespace Tumblott.Forms
                     ", d=" + this.mouseMoveDelta.X.ToString() + "," + this.mouseMoveDelta.Y.ToString(),
                     new Font("Tahoma", 8F, FontStyle.Bold), new SolidBrush(Color.Black), 0, 0);
             }
+#endif
         }
 
         void scrollTimer_Tick(object sender, EventArgs e)
@@ -88,12 +94,13 @@ namespace Tumblott.Forms
         {
             if (this.Zoom != null && this.CheckZoomThreshold())
             {
-                if (zoomWait < 10)
+                if (zoomWait < zoomWaitThreshold)
                 {
                     zoomWait++;
                 }
                 else
                 {
+                    //Utils.DebugLog("currentTappedPoint = (" + currentTappedPoint.X.ToString() + ", " + currentTappedPoint.Y.ToString() + ")");
                     // ズームイン
                     this.Zoom(target, new MouseEventArgs(MouseButtons.Left, 0, this.currentTappedPoint.X, this.currentTappedPoint.Y, 0));
                     isZooming = true;
@@ -112,8 +119,10 @@ namespace Tumblott.Forms
             mouseMoveFlick.Y = 0;
             mouseMoveTotal.X = 0;
             mouseMoveTotal.Y = 0;
-            previous2TappedPoint = target.PointToScreen(new Point(e.X, e.Y));
-            previousTappedPoint = previous2TappedPoint;
+            //currentTappedPoint = target.PointToScreen(new Point(e.X, e.Y));
+            currentTappedPoint = new Point(e.X, e.Y);
+            previousTappedPoint = currentTappedPoint;
+            previous2TappedPoint = currentTappedPoint;
             isMouseDown = true;
             isFlicked = false;
         }
@@ -123,7 +132,8 @@ namespace Tumblott.Forms
         {
             if (isMouseDown)
             {
-                currentTappedPoint = target.PointToScreen(new Point(e.X, e.Y));
+                //currentTappedPoint = target.PointToScreen(new Point(e.X, e.Y));
+                currentTappedPoint = new Point(e.X, e.Y);
                 //mouseMoveDelta.X = currentTappedPoint.X - previousTappedPoint.X;
                 //mouseMoveDelta.Y = currentTappedPoint.Y - previousTappedPoint.Y;
                 // WM6.5デバイスでMouseUp時にMouseMove→MouseUpされる→ベロシティ0になるみたいなので2つ前の値を使ってみるテスト (2010/07/07)
@@ -139,7 +149,7 @@ namespace Tumblott.Forms
                 mouseMoveTotal.X += Math.Abs(currentTappedPoint.X - previousTappedPoint.X);
                 mouseMoveTotal.Y += Math.Abs(currentTappedPoint.Y - previousTappedPoint.Y);
 
-                if (this.Scroll != null)
+                if (!isFlicked && this.Scroll != null)
                 {
                     // スクロールは前回値との差分で行う
                     this.Scroll(target, new MouseEventArgs(Control.MouseButtons, 0,
@@ -180,12 +190,23 @@ namespace Tumblott.Forms
             //mouseMoveDelta.X = currentTappedPoint.X - previous2TappedPoint.X;
             //mouseMoveDelta.Y = currentTappedPoint.Y - previous2TappedPoint.Y;
 
-            zoomTimer.Enabled = false;
-            if (this.isZooming && this.zoomWait < 10 && this.CheckZoomThreshold())
+            if (this.Tapped != null && mouseMoveTotal.X < 10 && mouseMoveTotal.Y < 10)
             {
-                // ズームリセット
+                this.Tapped(target, new MouseEventArgs(MouseButtons.Left, 1, e.X, e.Y, 0));
+            }
+
+            zoomTimer.Enabled = false;
+            if (this.zoomWait >= zoomWaitThreshold)
+            {
+                // ズーム動作開始していた場合，ズーム停止を通知
+                this.ZoomStopped(target, new EventArgs());
+            }
+            if (this.isZooming && this.zoomWait < zoomWaitThreshold && this.CheckZoomThreshold())
+            {
+                // 既にズームしており，ズーム動作開始前で，スクロール閾値未満ならズームリセット
                 this.Zoom(target, new MouseEventArgs(MouseButtons.Middle, 0, 0, 0, 0));
                 this.isZooming = false;
+                this.ZoomStopped(target, new EventArgs());
             }
             zoomWait = 0;
 
@@ -193,7 +214,7 @@ namespace Tumblott.Forms
             {
                 isMouseDown = false;
 
-                if (Math.Abs(mouseMoveDelta.X) > 0 || Math.Abs(mouseMoveDelta.Y) > 0)
+                if (!isFlicked && (Math.Abs(mouseMoveDelta.X) > 0 || Math.Abs(mouseMoveDelta.Y) > 0))
                 {
                     scrollVelocity.X = (int)mouseMoveDelta.X;
                     scrollVelocity.Y = (int)mouseMoveDelta.Y;
@@ -203,7 +224,7 @@ namespace Tumblott.Forms
 
             //Utils.DebugLog("c={" + currentTappedPoint.X.ToString() + ", " + currentTappedPoint.Y.ToString() + "}");
             //Utils.DebugLog("p={" + previousTappedPoint.X.ToString() + ", " + previousTappedPoint.Y.ToString() + "}");
-            Utils.DebugLog("d={" + mouseMoveDelta.X.ToString() + ", " + mouseMoveDelta.Y.ToString() + "}");
+            //Utils.DebugLog("d={" + mouseMoveDelta.X.ToString() + ", " + mouseMoveDelta.Y.ToString() + "}");
         }
 
         bool CheckZoomThreshold()
@@ -220,6 +241,16 @@ namespace Tumblott.Forms
             {
                 ScrollStopped(target, new EventArgs());
             }
+        }
+
+        public void Dispose()
+        {
+            this.Scroll = null;
+            this.ScrollStopped = null;
+            this.Flick = null;
+            this.Zoom = null;
+            this.ZoomStopped = null;
+            this.Tapped = null;
         }
     }
 }

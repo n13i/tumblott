@@ -18,7 +18,6 @@ namespace Tumblott.Client.Tumblr
     public sealed class TumblrClient
     {
         private bool isLoggedIn = false;
-        private string cookie;
 
         private static readonly TumblrClient instance = new TumblrClient();
 
@@ -347,6 +346,7 @@ namespace Tumblott.Client.Tumblr
         public object Object { get; set; }
         public bool IsError { get; set; }
         public int Status { get; set; }
+        public Guid Guid { get; set; }
     }
 
     public delegate JobResult JobCallback(WaitCallback progressChanged, object o);
@@ -357,6 +357,7 @@ namespace Tumblott.Client.Tumblr
         public WaitCallback JobProgressChanged { get; set; }
         public WaitCallback JobCompleted { get; set; }
         public object StateObject { get; set; }
+        public Guid Guid { get; set; }
     }
 
     public sealed class JobQueue
@@ -390,10 +391,12 @@ namespace Tumblott.Client.Tumblr
             }
         }
 
-        public static void Enqueue(Priority pri, JobCallback job, WaitCallback progressChanged, WaitCallback completed, object o)
+        public static Guid Enqueue(Priority pri, JobCallback job, WaitCallback progressChanged, WaitCallback completed, object o)
         {
-            Utils.DebugLog("Add job to queue " + pri.ToString());
-            instance.queue[(int)pri].Enqueue(new JobItem { Job = job, JobProgressChanged = progressChanged, JobCompleted = completed, StateObject = o });
+            Guid id = Guid.NewGuid();
+            Utils.DebugLog("Add job to queue " + pri.ToString() + ", guid=" + id.ToString());
+            instance.queue[(int)pri].Enqueue(new JobItem { Guid = id, Job = job, JobProgressChanged = progressChanged, JobCompleted = completed, StateObject = o });
+            return id;
         }
 
         private static void Run()
@@ -426,7 +429,7 @@ namespace Tumblott.Client.Tumblr
                         isEmpty = false;
                     }
 
-                    object result = null;
+                    JobResult result = null;
 
                     // do job
                     JobCallback job = item.Job;
@@ -439,10 +442,12 @@ namespace Tumblott.Client.Tumblr
                         //Thread.Sleep(3000);
                         //Utils.DebugLog("job completed");
                     }
+                    result.Guid = item.Guid;
 
                     WaitCallback comp = item.JobCompleted;
                     if (comp != null)
                     {
+                        Utils.DebugLog("job completed, guid=" + result.Guid.ToString());
                         comp(result);
                     }
                 }
@@ -473,6 +478,8 @@ namespace Tumblott.Client.Tumblr
     public class TumblrResult
     {
         public string Text { get; set; }
+        public int PostsCount { get; set; }
+        public bool IsError { get; set; }
     }
 
     /// <summary>
@@ -480,7 +487,9 @@ namespace Tumblott.Client.Tumblr
     /// </summary>
     public class TumblrPosts : List<TumblrPost>
     {
-        public Uri NextPageUri;
+        //public Uri NextPageUri;
+        public int NextOffset = 0;
+        private int currentNum;
 
         private object lockObject = new object();
 
@@ -491,7 +500,7 @@ namespace Tumblott.Client.Tumblr
         private HttpWebRequest request;
         private HttpWebResponse response;
         private Stream networkStream;
-        private byte[] buffer = new byte[2048];
+        private byte[] buffer = new byte[4096];
 
         private long totalReadLength;
         private long totalLength;
@@ -503,13 +512,21 @@ namespace Tumblott.Client.Tumblr
         private Action<int> progressChangedDelg = null;
         private Action<TumblrResult> completedDelg = null;
 
+        private long previousFetchTime = 0;
+
+        public void Clear()
+        {
+            this.NextOffset = 0;
+            base.Clear();
+        }
+
         /// <summary>
         /// ダッシュボードを受信
         /// </summary>
         /// <param name="url"></param>
         /// <param name="progressChanged"></param>
         /// <param name="completed"></param>
-        public void FetchDashboard(int start, Action<int> progressChanged, Action<TumblrResult> completed)
+        public void FetchDashboard(Action<int> progressChanged, Action<TumblrResult> completed)
         {
             lock (lockObject)
             {
@@ -524,13 +541,24 @@ namespace Tumblott.Client.Tumblr
                 this.progressChangedDelg = progressChanged;
                 this.completedDelg = completed;
 
-                ThreadPool.QueueUserWorkItem(FetchDashboardAsync, start);
+                object o = new object[2];
+
+                ThreadPool.QueueUserWorkItem(FetchDashboardAsync, this.NextOffset);
             }
         }
 
         private void FetchDashboardAsync(object o)
         {
             // FIXME start, num, type を指定可能にする
+
+            // 前回の呼び出しからの時間を覚えておいて，10秒以内なら待つようにする (Tumblr APIの制限)
+            long interval = Utils.GetUnixTime(DateTime.Now) - this.previousFetchTime;
+            if (interval <= 10)
+            {
+                int wait = (int)(15 - interval);
+                Utils.DebugLog("Waiting " + wait.ToString() + " sec ...");
+                Thread.Sleep(wait * 1000);
+            }
 
             int start = (int)o;
 
@@ -541,11 +569,13 @@ namespace Tumblott.Client.Tumblr
                 return;
             }
 
+            this.currentNum = Settings.PostsLoadedAtOnce;
+
             PostDataBuilder pdb = new PostDataBuilder();
             pdb.Add("email", Settings.Email);
             pdb.Add("password", Settings.Password);
             pdb.Add("start", start.ToString());
-            pdb.Add("num", "20");
+            pdb.Add("num", this.currentNum.ToString());
             pdb.Add("likes", "1");
             //pdb.Add("type", "link");
 
@@ -574,11 +604,24 @@ namespace Tumblott.Client.Tumblr
                 CleanupVariables();
 
                 TumblrResult r = new TumblrResult();
+                r.PostsCount = 0;
+                r.IsError = true;
 
                 if (e is WebException)
                 {
-                    Utils.DebugLog((((HttpWebResponse)((WebException)e).Response).StatusCode));
-                    r.Text = (((HttpWebResponse)((WebException)e).Response).StatusCode).ToString();
+                    if (((WebException)e).Response != null)
+                    {
+                        Utils.DebugLog((((HttpWebResponse)((WebException)e).Response).StatusCode));
+                        r.Text = (((HttpWebResponse)((WebException)e).Response).StatusCode).ToString();
+                    }
+                    else
+                    {
+                        r.Text = e.ToString();
+                    }
+                }
+                else
+                {
+                    r.Text = e.ToString();
                 }
 
                 this.completedDelg(r);
@@ -656,7 +699,8 @@ namespace Tumblott.Client.Tumblr
                         }
                         else
                         {
-                            //
+                            // totalLengthが不明な場合
+                            progressChangedDelg(50);
                         }
 
                         // next data
@@ -666,14 +710,18 @@ namespace Tumblott.Client.Tumblr
                     {
                         // read done
 
+                        this.previousFetchTime = Utils.GetUnixTime(DateTime.Now);
+
                         string tmp = Encoding.UTF8.GetString(strByte.ToArray(), 0, strByte.Count);
                         progressChangedDelg(100);
 
                         // TODO スクレイピングかAPI使用か切り替えられるといい
                         //Scrape(tmp);
-                        ParseXML(tmp);
+                        int added = ParseXML(tmp);
 
-                        this.completedDelg(null);
+                        this.NextOffset += this.currentNum;
+
+                        this.completedDelg(new TumblrResult { Text = "", IsError = false, PostsCount = added });
                         CleanupVariables();
                     }
                 }
@@ -685,6 +733,8 @@ namespace Tumblott.Client.Tumblr
                     Utils.DebugLog(e.ToString());
 
                     TumblrResult r = new TumblrResult();
+                    r.PostsCount = 0;
+                    r.IsError = true;
 
                     if (e is WebException)
                     {
@@ -719,12 +769,13 @@ namespace Tumblott.Client.Tumblr
         /// dashboard API取得結果の取り込み
         /// </summary>
         /// <param name="xml"></param>
-        private void ParseXML(string xml)
+        private int ParseXML(string xml)
         {
             StringReader sr = new StringReader(xml);
             XmlTextReader reader = new XmlTextReader(sr);
 
             TumblrPost post = null;
+            int addedPosts = 0;
 
             //Stack<string> pathStack = new Stack<string>();
             string currentElement = null;
@@ -747,7 +798,7 @@ namespace Tumblott.Client.Tumblr
                 {
                     case XmlNodeType.Element:
                         currentElement = reader.Name;
-                        Utils.DebugLog("<" + reader.Name + ">");
+                        //Utils.DebugLog("<" + reader.Name + ">");
                         switch (reader.Name)
                         {
                             case "post":
@@ -762,7 +813,7 @@ namespace Tumblott.Client.Tumblr
                                 {
                                     do
                                     {
-                                        Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
+                                        //Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
                                         // FIXME 全サイズのURLを持っておくべきかも
                                         if (reader.Name == "max-width" && reader.Value == ((int)Settings.ThumbnailImageSize).ToString())
                                         {
@@ -784,7 +835,7 @@ namespace Tumblott.Client.Tumblr
                         //pathStack.Push(reader.Name);
                         break;
                     case XmlNodeType.Text:
-                        Utils.DebugLog("text:" + currentElement + "> " + reader.Value);
+                        //Utils.DebugLog("text:" + currentElement + "> " + reader.Value);
                         switch (currentElement)
                         {
                             case "link-url":
@@ -821,7 +872,7 @@ namespace Tumblott.Client.Tumblr
                         break;
                     case XmlNodeType.EndElement:
                         //pathStack.Pop();
-                        Utils.DebugLog("</" + reader.Name + ">");
+                        //Utils.DebugLog("</" + reader.Name + ">");
                         if (reader.Name == "post")
                         {
                             if (post != null)
@@ -841,6 +892,7 @@ namespace Tumblott.Client.Tumblr
                                 if (!this.Exists(match => { return (match.Id == post.Id); }))
                                 {
                                     this.Add(post);
+                                    addedPosts++;
                                 }
                                 post = null;
                             }
@@ -858,6 +910,8 @@ namespace Tumblott.Client.Tumblr
 
             reader.Close();
             sr.Close();
+
+            return addedPosts;
         }
 
         private void ParsePostAttributes(XmlTextReader reader, TumblrPost post)
@@ -866,7 +920,7 @@ namespace Tumblott.Client.Tumblr
             {
                 do
                 {
-                    Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
+                    //Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
                     switch (reader.Name)
                     {
                         case "id":
@@ -924,6 +978,9 @@ namespace Tumblott.Client.Tumblr
                         case "liked":
                             post.IsLiked = (reader.Value == "true");
                             break;
+                        case "note-count":
+                            post.NoteCount = int.Parse(reader.Value);
+                            break;
                         default:
                             break;
                     }
@@ -938,7 +995,7 @@ namespace Tumblott.Client.Tumblr
             {
                 do
                 {
-                    Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
+                    //Utils.DebugLog("> " + reader.Name + "=" + reader.Value);
                     switch (reader.Name)
                     {
                         case "avatar-url-64":
@@ -951,589 +1008,6 @@ namespace Tumblott.Client.Tumblr
                 while (reader.MoveToNextAttribute());
             }
         }
-
-        #region スクレイパー(旧仕様)
-        #if false
-        /// <summary>
-        /// dashboard の HTML のスクレイピングを行う
-        /// </summary>
-        /// <param name="html"></param>
-        /// <returns></returns>
-        private void Scrape(string html)
-        {
-            /*
-             * <ol id="posts" > ～ </ol>
-             * <li id="post ～ </li>
-             * <div class="post_content"> ～ <div class="clear"></div>
-             * src="～"
-             * 
-             * photourl
-             * 75, 100, 250, 400, 500
-             * 
-             * <a id="next_page_link" href="/dashboard/2/238122002">
-             *   238122002 は 1 ページ目の最後の post
-             */
-
-            int pPostsStart = html.IndexOf("<ol id=\"posts\"");
-            if (pPostsStart == -1)
-            {
-                // FIXME
-            }
-            int pPostsEnd = html.IndexOf("</ol>", pPostsStart);
-
-            TumblrPost previousPost = null;
-
-            int pos = pPostsStart;
-            while (true)
-            {
-                int pPostStart = html.IndexOf("<li id=\"post", pos, pPostsEnd - pos);
-                if (pPostStart == -1) { break; }
-                int pPostEnd = html.IndexOf("</li>", pPostStart, pPostsEnd - pPostStart);
-                if (pPostEnd == -1) { break; }
-                pPostEnd += 5;
-
-                // 次回ループのため
-                pos = pPostEnd;
-
-                XmlDocument xmlDoc = new XmlDocument();
-                string xml = html.Substring(pPostStart, pPostEnd - pPostStart);
-                xml = Utils.ReplaceCharacterEntityReferences(xml);
-                xml = Utils.RemoveWhiteSpaces(xml);
-                // album_artでのalt重複を修正
-                xml = xml.Replace("alt=\"\" ", "");
-
-                try
-                {
-                    xmlDoc.LoadXml(xml);
-                }
-                catch (Exception e)
-                {
-                    Utils.DebugLog(e);
-                    continue;
-                }
-
-                /*
-                 * <li id="postXXXXXXXXX">～</li>
-                 */
-                if (xmlDoc.DocumentElement.NodeType != XmlNodeType.Element ||
-                    xmlDoc.DocumentElement.Name != "li")
-                {
-                    continue;
-                }
-
-                Dictionary<string, string> attrs = GetElementAttributes(xmlDoc.DocumentElement);
-
-                if (attrs.ContainsKey("id"))
-                {
-                    if (attrs["id"].StartsWith("post"))
-                    {
-                        TumblrPost post = new TumblrPost();
-
-                        post.Id = attrs["id"].Substring(4);
-                        Utils.DebugLog("post id = " + post.Id);
-
-                        string classes = attrs["class"];
-
-                        // post type を決定
-                        if (classes.IndexOf("regular") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Text;
-                        }
-                        else if (classes.IndexOf("photo") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Photo;
-                        }
-                        else if (classes.IndexOf("quote") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Quote;
-                        }
-                        else if (classes.IndexOf("link") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Link;
-                        }
-                        else if (classes.IndexOf("conversation") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Chat;
-                        }
-                        else if (classes.IndexOf("audio") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Audio;
-                        }
-                        else if (classes.IndexOf("video") != -1)
-                        {
-                            post.Type = TumblrPost.Types.Video;
-                        }
-
-                        if (classes.IndexOf("is_mine") != -1)
-                        {
-                            post.IsMine = true;
-                        }
-
-                        if (classes.IndexOf("same_user_as_last") != -1)
-                        {
-                            post.IsSameUserAsLast = true;
-                        }
-
-                        if (classes.IndexOf("is_reblog") != -1)
-                        {
-                            post.IsReblog = true;
-                        }
-
-                        /*
-                         *   <div class="post_controls">～</div>
-                         *   <div class="post_info">～</div>
-                         *   <div class="post_content">～</div>
-                         */
-                        ScrapePost(xmlDoc.DocumentElement, ref post);
-
-                        if (post.Info == null)
-                        {
-                            if (post.IsMine && !post.IsReblog)
-                            {
-                                post.Info = "You:";
-                            }
-                            else if (post.IsSameUserAsLast)
-                            {
-                                if (previousPost != null)
-                                {
-                                    post.Info = previousPost.Info;
-                                }
-                            }
-                        }
-
-                        this.Add(post);
-                        previousPost = post;
-                    }
-                }
-            }
-
-            // FIXME Enable endless scrollingオン時に動作するかどうか確認
-            //Utils.DebugLog("next_page_link");
-            this.NextPageUri = null;
-            int pLinkStart = html.IndexOf("<a id=\"next_page_link\" href=\"", pPostsEnd);
-            if (pLinkStart != -1)
-            {
-                pLinkStart += 29;
-                int pLinkEnd = html.IndexOf("\">", pLinkStart);
-                if (pLinkEnd != -1)
-                {
-                    string uri = "http://www.tumblr.com" + html.Substring(pLinkStart, pLinkEnd - pLinkStart);
-                    //Utils.DebugLog(uri);
-                    this.NextPageUri = new Uri(uri);
-                }
-            }
-        }
-
-        private void ScrapePost(XmlNode postNode, ref TumblrPost post)
-        {
-            // <li id="postXXXXXXXXX"> 以下の <div> について処理
-            foreach (XmlNode div in postNode.ChildNodes)
-            {
-                Dictionary<string, string> attrs = GetElementAttributes(div);
-
-                if (!attrs.ContainsKey("class"))
-                {
-                    continue;
-                }
-
-                if (attrs["class"] == "post_controls")
-                {
-                    ScrapePostControls(div, ref post);
-                }
-                else if (attrs["class"] == "post_info")
-                {
-                    // 同じユーザによるreblogでないpostが連続する場合，最初の1つにしか出現しない
-                    // 自分のpostの場合も出現しない
-                    ScrapePostInfo(div, ref post);
-                }
-                else if (attrs["class"] == "post_content")
-                {
-                    ScrapePostContent(div, ref post);
-                }
-                else if (attrs["class"] == "so_ie_doesnt_treat_this_as_inline")
-                {
-                    ScrapePostUserInfo(div, ref post);
-                }
-            }
-
-            //post.Type = TumblrPost.Types.Text;
-            //post.Info = "dummy";
-            //post.Html = "<p>dummy</p>";
-        }
-
-        private void ScrapePostControls(XmlNode node, ref TumblrPost post)
-        {
-            Utils.DebugLog("post_controls");
-
-            foreach (XmlNode n in node.ChildNodes)
-            {
-                Dictionary<string, string> attrs = GetElementAttributes(n);
-
-                if (n.Name == "a" && attrs.ContainsKey("href"))
-                {
-                    if (attrs["href"].StartsWith("/reblog/"))
-                    {
-                        post.ReblogActionUri = new Uri("http://www.tumblr.com" + attrs["href"]);
-                    }
-                }
-                else if (n.Name == "form" && attrs.ContainsKey("action") && attrs.ContainsKey("style"))
-                {
-                    // unlike のフォームと like のフォームが存在
-                    // form の style に display:none; が入ってるほうが現在の状態
-                    if (attrs["action"].StartsWith("/unlike/"))
-                    {
-                        post.UnlikeActionUri = new Uri("http://www.tumblr.com" + attrs["action"]);
-                        if (attrs["style"] == "display:none;")
-                        {
-                            post.IsLiked = false;
-                        }
-                    }
-                    else if (attrs["action"].StartsWith("/like/"))
-                    {
-                        post.LikeActionUri = new Uri("http://www.tumblr.com" + attrs["action"]);
-                        if (attrs["style"] == "display:none;")
-                        {
-                            post.IsLiked = true;
-                        }
-                    }
-
-                    foreach (XmlNode n2 in n.ChildNodes)
-                    {
-                        if (n2.Name == "input")
-                        {
-                            Dictionary<string, string> a2 = GetElementAttributes(n2);
-                            if (a2.ContainsKey("id"))
-                            {
-                                if (a2["id"] == "form_key")
-                                {
-                                    post.ReblogKey = a2["value"];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void ScrapePostInfo(XmlNode node, ref TumblrPost post)
-        {
-            string text = node.InnerText;
-            text = text.Replace("\r\n", "").Replace("\r", "").Replace("\n", "").Replace("\t", "");
-            post.Info = text;
-            Utils.DebugLog("post_info = " + post.Info);
-        }
-
-        private void ScrapePostContent(XmlNode node, ref TumblrPost post)
-        {
-            Utils.DebugLog("post_content");
-
-            post.Html = "<content>" + node.InnerXml + "</content>";
-
-            if (post.Type == TumblrPost.Types.Photo)
-            {
-                Dictionary<string, string> attr;
-                
-                attr = GetElementAttributes(node.FirstChild.FirstChild);
-                if (attr.ContainsKey("src"))
-                {
-                    post.ImageUri = new Uri(attr["src"]);
-                }
-                
-                attr = GetElementAttributes(node.ChildNodes[1].FirstChild.FirstChild);
-                if (attr.ContainsKey("src"))
-                {
-                    post.LargeImageUri = new Uri(attr["src"]);
-                }
-
-                attr = null;
-            }
-        }
-
-        private void ScrapePostUserInfo(XmlNode node, ref TumblrPost post)
-        {
-            Utils.DebugLog("userinfo");
-
-            foreach (XmlNode n in node.ChildNodes)
-            {
-                Dictionary<string, string> attrs = GetElementAttributes(n);
-
-                if (n.Name == "a" && attrs.ContainsKey("class"))
-                {
-                    if (attrs["class"] == "avatar")
-                    {
-                        string style = attrs["style"];
-                        int sp = style.IndexOf("url('");
-                        if (sp != -1)
-                        {
-                            sp += 5;
-                            int ep = style.IndexOf("')", sp);
-                            if (ep != -1)
-                            {
-                                post.AvatarImageUri = new Uri(style.Substring(sp, ep - sp));
-                                Utils.DebugLog(post.AvatarImageUri);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private Dictionary<string, string> GetElementAttributes(XmlNode elem)
-        {
-            Dictionary<string, string> dict = new Dictionary<string, string>();
-
-            XmlAttributeCollection attrs = elem.Attributes;
-            if (attrs != null)
-            {
-                foreach (XmlAttribute attr in attrs)
-                {
-                    //Utils.DebugLog(attr.Name + "=" + attr.Value);
-                    dict.Add(attr.Name, attr.Value);
-                }
-            }
-
-            return dict;
-        }
-        private void Scrape_old(string html)
-        {
-            /*
-             * <ol id="posts" > ～ </ol>
-             * <li id="post ～ </li>
-             * <div class="post_content"> ～ <div class="clear"></div>
-             * src="～"
-             * 
-             * photourl
-             * 75, 100, 250, 400, 500
-             * 
-             * <a id="next_page_link" href="/dashboard/2/238122002">
-             *   238122002 は 1 ページ目の最後の post
-             */
-
-            int pPostsStart = html.IndexOf("<ol id=\"posts\"");
-            int pPostsEnd = html.IndexOf("</ol>", pPostsStart);
-
-            int pos = pPostsStart;
-            TumblrPost previousPost = null;
-
-            while (true)
-            {
-                int pPostStart = html.IndexOf("<li id=\"post", pos, pPostsEnd - pos);
-                if (pPostStart == -1) { break; }
-                int pPostEnd = html.IndexOf("</li>", pPostStart, pPostsEnd - pPostStart);
-                if (pPostEnd == -1) { break; }
-
-                string tmp = html.Substring(pPostStart, pPostEnd - pPostStart);
-                //Utils.DebugLog(tmp);
-
-                // 次回ループのため
-                pos = pPostEnd + 5;
-
-                try
-                {
-                    var post = new TumblrPost();
-
-                    // post id
-                    int pPostIdStart = html.IndexOf("<li id=\"post", pPostStart, pPostEnd - pPostStart);
-                    if (pPostIdStart == -1) { continue; }
-                    pPostIdStart += 12;
-                    int pPostIdEnd = html.IndexOf("\"", pPostIdStart, pPostEnd - pPostIdStart);
-                    if (pPostIdEnd == -1) { continue; }
-                    post.Id = html.Substring(pPostIdStart, pPostIdEnd - pPostIdStart);
-
-                    // post type -------------------------------------------------------------
-                    int pPostClassStart = html.IndexOf("class=\"", pPostIdEnd, pPostEnd - pPostIdEnd);
-                    if (pPostClassStart == -1) { continue; }
-                    int pPostClassEnd = html.IndexOf("\">", pPostClassStart, pPostEnd - pPostClassStart);
-
-                    // TODO is_reblog
-                    string classes = html.Substring(pPostClassStart, pPostClassEnd - pPostClassStart);
-                    if (classes.IndexOf("regular") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Text;
-                    }
-                    else if (classes.IndexOf("photo") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Photo;
-                    }
-                    else if (classes.IndexOf("quote") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Quote;
-                    }
-                    else if (classes.IndexOf("link") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Link;
-                    }
-                    else if (classes.IndexOf("conversation") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Chat;
-                    }
-                    else if (classes.IndexOf("audio") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Audio;
-                    }
-                    else if (classes.IndexOf("video") != -1)
-                    {
-                        post.Type = TumblrPost.Types.Video;
-                    }
-
-                    bool isMine = false;
-                    if (classes.IndexOf("is_mine") != -1)
-                    {
-                        isMine = true;
-                    }
-
-                    bool isSameUserAsLast = false;
-                    if (classes.IndexOf("same_user_as_last") != -1)
-                    {
-                        isSameUserAsLast = true;
-                    }
-
-                    bool isReblog = false;
-                    if (classes.IndexOf("is_reblog") != -1)
-                    {
-                        isReblog = true;
-                    }
-
-                    // post_controls
-                    int pPostControlsStart = html.IndexOf("<div class=\"post_controls\">", pPostStart, pPostEnd - pPostStart);
-                    if (pPostControlsStart == -1)
-                    {
-                        Utils.DebugLog("post_controls not found");
-                        continue;
-                    }
-                    pPostControlsStart += 27;
-
-                    // post_info
-                    // 同じユーザによるreblogでないpostが連続する場合，最初の1つにしか出現しない
-                    // 自分のpostの場合も出現しない
-                    int pPostInfoStart = html.IndexOf("<div class=\"post_info\">", pPostStart, pPostEnd - pPostStart);
-                    if (pPostInfoStart == -1)
-                    {
-                        if (isMine && !isReblog)
-                        {
-                            post.Info = "You:";
-                        }
-                        else if (isSameUserAsLast)
-                        {
-                            if (previousPost == null)
-                            {
-                                Utils.DebugLog("post_info not found");
-                                continue;
-                            }
-                            else
-                            {
-                                post.Info = previousPost.Info;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        pPostInfoStart += 23;
-
-                        int pPostInfoEnd = html.IndexOf("</div>", pPostInfoStart, pPostEnd - pPostInfoStart);
-                        if (pPostInfoEnd == -1) { continue; }
-
-                        post.Info = html.Substring(pPostInfoStart, pPostInfoEnd - pPostInfoStart).TrimStart(' ', '\r', '\n').TrimEnd(' ', '\r', '\n');
-                        XmlDocument xmlDoc = new XmlDocument();
-                        xmlDoc.PreserveWhitespace = false;
-                        string xml = null;
-                        try
-                        {
-                            xml = html.Substring(pPostInfoStart, pPostInfoEnd - pPostInfoStart);
-                            xml = "<postinfo>" + xml + "</postinfo>";
-                            xmlDoc.LoadXml(xml);
-                            string text = xmlDoc.DocumentElement.InnerText;
-                            text = text.Replace("\r\n", "");
-                            text = text.Replace("\r", "");
-                            text = text.Replace("\n", "");
-                            text = text.Replace("\t", "");
-                            // FIXME さすがに遅い
-                            while (text.IndexOf("  ") != -1)
-                            {
-                                text = text.Replace("  ", " ");
-                            }
-                            text = text.Trim();
-                            //Utils.DebugLog(text);
-
-                            post.Info = text;
-                        }
-                        catch (Exception e)
-                        {
-                            Utils.DebugLog(e);
-                            Utils.DebugLog(xml);
-                        }
-                    }
-
-                    // post_content
-                    // +26
-                    int pPostContentStart = html.IndexOf("<div class=\"post_content\">", pPostStart, pPostEnd - pPostStart);
-                    if (pPostContentStart == -1)
-                    {
-                        Utils.DebugLog("post_content not found");
-                        continue;
-                    }
-                    pPostContentStart += 26;
-
-                    int pPostContentEnd = html.IndexOf("<div class=\"clear\"></div>", pPostContentStart, pPostEnd - pPostContentStart);
-                    if (pPostContentEnd == -1)
-                    {
-                        Utils.DebugLog("div clear not found");
-                        continue;
-                    }
-
-                    post.Html = html.Substring(pPostContentStart - 26, pPostContentEnd - (pPostContentStart - 26));
-
-                    if (post.Type == TumblrPost.Types.Photo)
-                    {
-                        // FIXME
-                        // dashboardのPreferencesでShow full size photosをオンにした場合
-                        // class="image"のみ出現
-                        int pThumbImg = html.IndexOf("class=\"image_thumbnail\"", pPostContentStart, pPostContentEnd - pPostContentStart);
-
-                        int pThumbImgUrlStart = html.IndexOf("src=\"", pThumbImg, pPostContentEnd - pThumbImg);
-                        if (pThumbImgUrlStart == -1) { continue; }
-                        pThumbImgUrlStart += 5;
-                        int pThumbImgUrlEnd = html.IndexOf("\"", pThumbImgUrlStart, pPostContentEnd - pThumbImgUrlStart);
-                        string thumbImgUrl = html.Substring(pThumbImgUrlStart, pThumbImgUrlEnd - pThumbImgUrlStart);
-
-                        int pHighresImg = html.IndexOf("class=\"image\"", pThumbImgUrlEnd, pPostContentEnd - pThumbImgUrlEnd);
-
-                        int pHighresImgUrlStart = html.IndexOf("src=\"", pHighresImg, pPostContentEnd - pHighresImg);
-                        if (pHighresImgUrlStart == -1) { continue; }
-                        pHighresImgUrlStart += 5;
-                        int pHighresImgUrlEnd = html.IndexOf("\"", pHighresImgUrlStart, pPostContentEnd - pHighresImgUrlStart);
-                        string highresImgUrl = html.Substring(pHighresImgUrlStart, pHighresImgUrlEnd - pHighresImgUrlStart);
-
-                        post.ImageUri = new Uri(thumbImgUrl);
-                        post.LargeImageUri = new Uri(highresImgUrl);
-                    }
-
-                    this.Add(post);
-                    previousPost = post;
-                }
-                catch (Exception e)
-                {
-                }
-            }
-
-            // FIXME Enable endless scrollingオン時に動作するかどうか確認
-            //Utils.DebugLog("next_page_link");
-            this.NextPageUri = null;
-            int pLinkStart = html.IndexOf("<a id=\"next_page_link\" href=\"", pPostsEnd);
-            if (pLinkStart != -1)
-            {
-                pLinkStart += 29;
-                int pLinkEnd = html.IndexOf("\">", pLinkStart);
-                if (pLinkEnd != -1)
-                {
-                    string uri = "http://www.tumblr.com" + html.Substring(pLinkStart, pLinkEnd - pLinkStart);
-                    //Utils.DebugLog(uri);
-                    this.NextPageUri = new Uri(uri);
-                }
-            }
-        }
-        #endif
-        #endregion
     }
 
     /// <summary>
@@ -1575,6 +1049,7 @@ namespace Tumblott.Client.Tumblr
         public Uri RebloggedFromUri { get; set; }
         public string RebloggedRoot { get; set; }
         public Uri RebloggedRootUri { get; set; }
+        public int NoteCount { get; set; }
 
         public string LinkText { get; set; }
         public Uri LinkUri { get; set; }
@@ -1707,9 +1182,9 @@ namespace Tumblott.Client.Tumblr
             return new JobResult { Object = this, IsError = false, Status = 0 };
         }
 
-        public void Reblog(WaitCallback progressChanged, WaitCallback completed)
+        public Guid Reblog(WaitCallback progressChanged, WaitCallback completed)
         {
-            JobQueue.Enqueue(JobQueue.Priority.High, new JobCallback(ReblogAsync), progressChanged, completed, null);
+            return JobQueue.Enqueue(JobQueue.Priority.High, new JobCallback(ReblogAsync), progressChanged, completed, null);
         }
 
         private JobResult ReblogAsync(WaitCallback jobProgressChangedDelegate, object o)
@@ -1723,6 +1198,7 @@ namespace Tumblott.Client.Tumblr
 
             return new JobResult { Object = this, IsError = false, Status = 0 };
             
+#if false
             string html = null;
 
             try
@@ -1789,8 +1265,11 @@ namespace Tumblott.Client.Tumblr
             }
 
             return new JobResult { Object = this, IsError = false, Status = 0 };
+#endif
         }
 
+        // 以下はReblog処理をTumblrClientクラスへ追い出す前のコード
+#if false
         private static Dictionary<string, string> GrabFormValues(string html)
         {
             Dictionary<string, string> dict = new Dictionary<string, string>();
@@ -1914,10 +1393,11 @@ namespace Tumblott.Client.Tumblr
 
             return str.Substring(pBegin, pEnd - pBegin);
         }
+#endif
 
-        public void Like(bool likeOrNot, WaitCallback progressChanged, WaitCallback completed)
+        public Guid Like(bool likeOrNot, WaitCallback progressChanged, WaitCallback completed)
         {
-            JobQueue.Enqueue(JobQueue.Priority.High, new JobCallback(LikeAsync), progressChanged, completed, !this.IsLiked);
+            return JobQueue.Enqueue(JobQueue.Priority.High, new JobCallback(LikeAsync), progressChanged, completed, !this.IsLiked);
         }
 
         private JobResult LikeAsync(WaitCallback jobProgressChangedDelegate, object o)
@@ -1931,10 +1411,12 @@ namespace Tumblott.Client.Tumblr
                 return new JobResult { Object = this, IsError = true, Status = 0 };
             }
 
+            this.IsLiked = like;
+            Utils.DebugLog("isLiked = " + this.IsLiked.ToString());
+
             return new JobResult { Object = this, IsError = false, Status = 0 };
 
-            // --------
-
+#if false
             Uri actionUri = null;
             if (like)
             {
@@ -1967,7 +1449,9 @@ namespace Tumblott.Client.Tumblr
             stream.Close();
             r.Close();
 
+
             return new JobResult { Object = this, IsError = false, Status = 0 };
+#endif
         }
     }
 

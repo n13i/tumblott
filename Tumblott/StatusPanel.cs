@@ -13,6 +13,8 @@ namespace Tumblott.Forms
     {
         private string text;
         private Image offImg;
+        private bool isShowMenuButton = false;
+        private SizeF scaleFactor;
 
         public new string Text
         {
@@ -30,8 +32,30 @@ namespace Tumblott.Forms
             }
         }
 
+        public bool ShowMenuButton
+        {
+            set
+            {
+                if (value != this.isShowMenuButton)
+                {
+                    this.isShowMenuButton = value;
+                    Invalidate();
+                }
+            }
+            get
+            {
+                return this.isShowMenuButton;
+            }
+        }
+
         public StatusPanel()
         {
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            this.scaleFactor = factor;
+            base.ScaleControl(factor, specified);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -75,6 +99,26 @@ namespace Tumblott.Forms
 
             g.DrawImage(bgImg, dstRect, srcRect, GraphicsUnit.Pixel);
 
+
+            // メニューボタン
+            if (this.isShowMenuButton)
+            {
+                ImageAttributes imgAttr = new ImageAttributes();
+                imgAttr.SetColorKey(Color.FromArgb(56, 84, 109), Color.FromArgb(56, 84, 109));
+
+                Image img = global::Tumblott.Properties.Resources.button_bg_menu;
+
+                Rectangle dRect = new Rectangle();
+                dRect.Width = (int)(img.Width/2 * this.scaleFactor.Width);
+                dRect.Height = (int)(img.Height/2 * this.scaleFactor.Height);
+                dRect.X = (this.Width - dRect.Width) / 2;
+                dRect.Y = 0;
+
+                g.DrawImage(img, dRect, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, imgAttr);
+            }
+
+
+            // テキスト
             int offsetY = (int)(16 * (g.DpiY / 96));
 
             Font font = new Font(FontFamily.GenericSansSerif, 9F, FontStyle.Regular);

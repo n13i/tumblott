@@ -56,6 +56,10 @@
     <Compile Include="DialogBox.Designer.cs">
       <DependentUpon>DialogBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Drawing.cs" />
+    <Compile Include="HeaderPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="LicenseForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -91,12 +95,6 @@
     <Compile Include="PhotoForm.Designer.cs">
       <DependentUpon>PhotoForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="LoginForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="LoginForm.Designer.cs">
-      <DependentUpon>LoginForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="PostView.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -114,11 +112,20 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="ScrollList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ScrollList.Designer.cs">
+      <DependentUpon>ScrollList.cs</DependentUpon>
+    </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="StatusPanel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="TextViewer.cs" />
+    <Compile Include="TumblottForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="TumblrClient.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="SettingsForm.cs">
@@ -127,14 +134,16 @@
     <Compile Include="SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="MainForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewerForm.designer.cs">
+      <DependentUpon>ViewerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="VisualStyle.cs" />
+    <Compile Include="Win32Helper.cs" />
     <EmbeddedResource Include="DialogBox.resx">
       <DependentUpon>DialogBox.cs</DependentUpon>
     </EmbeddedResource>
@@ -158,22 +167,19 @@
     <EmbeddedResource Include="PhotoForm.resx">
       <DependentUpon>PhotoForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="LoginForm.resx">
-      <DependentUpon>LoginForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="PostView.resx">
       <DependentUpon>PostView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MainForm.resx">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ViewerForm.resx">
+      <DependentUpon>ViewerForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
   </ItemGroup>
@@ -282,10 +288,13 @@
     <None Include="Resources\progress_back.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\tumblott-icon.png" />
+    <None Include="Resources\tumblott_icon.png" />
+    <None Include="Resources\button_bg_menu.png" />
     <Content Include="Resources\frame_shadow.png" />
     <None Include="Resources\image_loading.png" />
     <Content Include="Resources\license.txt" />
+    <None Include="Resources\tumblott_icon_64.png" />
+    <None Include="Resources\tumblott_splash.png" />
     <Content Include="tumblott-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

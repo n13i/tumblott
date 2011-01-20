@@ -14,9 +14,17 @@ set status=snapshot
 set outfilename=Tumblott_v%ver%_%status%_%dt%.CAB
 echo %outfilename%
 
-cd "C:\Program Files\Windows CE Tools\wce420\POCKET PC 2003\Tools"
+if "%ProgramFiles(x86)%" == "" (
+	set progfiles="%ProgramFiles%"
+) else (
+	set progfiles="%ProgramFiles(x86)%"
+)
+
+cd "%progfiles%\Windows CE Tools\wce420\POCKET PC 2003\Tools"
 Cabwiz.exe "%currentpath%Tumblott.inf"
 
 cd %currentpath%
 ren Tumblott.CAB %outfilename%
+
+pause
 

@@ -195,7 +195,7 @@ namespace Tumblott.TextViewer
         {
             this.Bands.Clear();
 
-            Font font = new Font("Tahoma", this.FontSize, this.FontStyle);
+            Font font = new Font(Settings.FontName, this.FontSize, this.FontStyle);
             Color color = this.Color;
 
             this.font = font;
@@ -332,7 +332,7 @@ namespace Tumblott.TextViewer
     {
         public override void Layout(Graphics g, int maxWidth, Point pos)
         {
-            Font font = new Font("Tahoma", this.FontSize, this.FontStyle);
+            Font font = new Font(Settings.FontName, this.FontSize, this.FontStyle);
             SizeF baseSize = g.MeasureString("M", font);
             int baseHeight = (int)Math.Ceiling(baseSize.Height) + 2;
 

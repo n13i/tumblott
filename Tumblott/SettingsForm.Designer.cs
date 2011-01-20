@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabAccountPage = new System.Windows.Forms.TabPage();
             this.accountLabel = new System.Windows.Forms.Label();
@@ -42,10 +41,10 @@
             this.showFullScreenCheckBox = new System.Windows.Forms.CheckBox();
             this.thumbImageSizeLabel = new System.Windows.Forms.Label();
             this.thumbImageSizeComboBox = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.postsLabel = new System.Windows.Forms.Label();
+            this.postsNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.openLinkCheckBox = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.generalLabel = new System.Windows.Forms.Label();
             this.tabNetworkPage = new System.Windows.Forms.TabPage();
             this.proxyOnlyImagesCheckBox = new System.Windows.Forms.CheckBox();
             this.proxyPasswordTextBox = new System.Windows.Forms.TextBox();
@@ -61,6 +60,7 @@
             this.noProxyRadioButton = new System.Windows.Forms.RadioButton();
             this.useDefaultRadioButton = new System.Windows.Forms.RadioButton();
             this.tabAboutPage = new System.Windows.Forms.TabPage();
+            this.debugCheckBox = new System.Windows.Forms.CheckBox();
             this.licenseLinkLabel = new System.Windows.Forms.LinkLabel();
             this.iconPictureBox = new System.Windows.Forms.PictureBox();
             this.debugButton = new System.Windows.Forms.Button();
@@ -69,11 +69,10 @@
             this.webLinkLabel = new System.Windows.Forms.LinkLabel();
             this.versionLabel = new System.Windows.Forms.Label();
             this.nameLabel = new System.Windows.Forms.Label();
-            this.debugCheckBox = new System.Windows.Forms.CheckBox();
             this.tabControl.SuspendLayout();
             this.tabAccountPage.SuspendLayout();
             this.tabGeneralPage.SuspendLayout();
-            //((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            //((System.ComponentModel.ISupportInitialize)(this.postsNumericUpDown)).BeginInit();
             this.tabNetworkPage.SuspendLayout();
             this.tabAboutPage.SuspendLayout();
             //((System.ComponentModel.ISupportInitialize)(this.iconPictureBox)).BeginInit();
@@ -86,6 +85,7 @@
             this.tabControl.Controls.Add(this.tabNetworkPage);
             this.tabControl.Controls.Add(this.tabAboutPage);
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.Font = new System.Drawing.Font("Tahoma", 11F, System.Drawing.FontStyle.Regular);
             this.tabControl.Location = new System.Drawing.Point(0, 0);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
@@ -100,9 +100,9 @@
             this.tabAccountPage.Controls.Add(this.emailTextBox);
             this.tabAccountPage.Controls.Add(this.passwordLabel);
             this.tabAccountPage.Controls.Add(this.emailLabel);
-            this.tabAccountPage.Location = new System.Drawing.Point(4, 21);
+            this.tabAccountPage.Location = new System.Drawing.Point(4, 25);
             this.tabAccountPage.Name = "tabAccountPage";
-            this.tabAccountPage.Size = new System.Drawing.Size(232, 243);
+            this.tabAccountPage.Size = new System.Drawing.Size(232, 239);
             this.tabAccountPage.TabIndex = 3;
             this.tabAccountPage.Text = global::Tumblott.Messages.Account;
             // 
@@ -120,14 +120,14 @@
             this.passwordTextBox.Location = new System.Drawing.Point(18, 111);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(192, 19);
+            this.passwordTextBox.Size = new System.Drawing.Size(192, 23);
             this.passwordTextBox.TabIndex = 4;
             // 
             // emailTextBox
             // 
             this.emailTextBox.Location = new System.Drawing.Point(18, 59);
             this.emailTextBox.Name = "emailTextBox";
-            this.emailTextBox.Size = new System.Drawing.Size(192, 19);
+            this.emailTextBox.Size = new System.Drawing.Size(192, 23);
             this.emailTextBox.TabIndex = 3;
             // 
             // passwordLabel
@@ -154,88 +154,87 @@
             this.tabGeneralPage.Controls.Add(this.showFullScreenCheckBox);
             this.tabGeneralPage.Controls.Add(this.thumbImageSizeLabel);
             this.tabGeneralPage.Controls.Add(this.thumbImageSizeComboBox);
-            this.tabGeneralPage.Controls.Add(this.label2);
-            this.tabGeneralPage.Controls.Add(this.numericUpDown1);
+            this.tabGeneralPage.Controls.Add(this.postsLabel);
+            this.tabGeneralPage.Controls.Add(this.postsNumericUpDown);
             this.tabGeneralPage.Controls.Add(this.openLinkCheckBox);
-            this.tabGeneralPage.Controls.Add(this.label1);
-            this.tabGeneralPage.Location = new System.Drawing.Point(4, 21);
+            this.tabGeneralPage.Controls.Add(this.generalLabel);
+            this.tabGeneralPage.Location = new System.Drawing.Point(4, 25);
             this.tabGeneralPage.Name = "tabGeneralPage";
-            this.tabGeneralPage.Size = new System.Drawing.Size(232, 243);
+            this.tabGeneralPage.Size = new System.Drawing.Size(232, 239);
             this.tabGeneralPage.TabIndex = 0;
             this.tabGeneralPage.Text = global::Tumblott.Messages.General;
             // 
             // appliedAfterRestartLabel
             // 
-            this.appliedAfterRestartLabel.Location = new System.Drawing.Point(4, 116);
+            this.appliedAfterRestartLabel.Location = new System.Drawing.Point(4, 132);
             this.appliedAfterRestartLabel.Name = "appliedAfterRestartLabel";
-            this.appliedAfterRestartLabel.Size = new System.Drawing.Size(216, 27);
+            this.appliedAfterRestartLabel.Size = new System.Drawing.Size(216, 36);
             this.appliedAfterRestartLabel.TabIndex = 9;
             this.appliedAfterRestartLabel.Text = "The changes below are applied after restart.";
             // 
             // showMenuBarCheckBox
             // 
-            this.showMenuBarCheckBox.Location = new System.Drawing.Point(8, 172);
+            this.showMenuBarCheckBox.Location = new System.Drawing.Point(8, 196);
             this.showMenuBarCheckBox.Name = "showMenuBarCheckBox";
-            this.showMenuBarCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.showMenuBarCheckBox.Size = new System.Drawing.Size(200, 24);
             this.showMenuBarCheckBox.TabIndex = 8;
             this.showMenuBarCheckBox.Text = "Show menu bar";
             // 
             // showFullScreenCheckBox
             // 
             this.showFullScreenCheckBox.Enabled = false;
-            this.showFullScreenCheckBox.Location = new System.Drawing.Point(8, 152);
+            this.showFullScreenCheckBox.Location = new System.Drawing.Point(8, 168);
             this.showFullScreenCheckBox.Name = "showFullScreenCheckBox";
-            this.showFullScreenCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.showFullScreenCheckBox.Size = new System.Drawing.Size(200, 24);
             this.showFullScreenCheckBox.TabIndex = 7;
             this.showFullScreenCheckBox.Text = "Fullscreen";
             // 
             // thumbImageSizeLabel
             // 
-            this.thumbImageSizeLabel.Location = new System.Drawing.Point(6, 85);
+            this.thumbImageSizeLabel.Location = new System.Drawing.Point(6, 101);
             this.thumbImageSizeLabel.Name = "thumbImageSizeLabel";
-            this.thumbImageSizeLabel.Size = new System.Drawing.Size(115, 12);
+            this.thumbImageSizeLabel.Size = new System.Drawing.Size(160, 20);
             this.thumbImageSizeLabel.TabIndex = 6;
             this.thumbImageSizeLabel.Text = "Thumbnail image size";
             // 
             // thumbImageSizeComboBox
             // 
-            this.thumbImageSizeComboBox.Location = new System.Drawing.Point(172, 82);
+            this.thumbImageSizeComboBox.Location = new System.Drawing.Point(172, 98);
             this.thumbImageSizeComboBox.Name = "thumbImageSizeComboBox";
-            this.thumbImageSizeComboBox.Size = new System.Drawing.Size(48, 20);
+            this.thumbImageSizeComboBox.Size = new System.Drawing.Size(48, 24);
             this.thumbImageSizeComboBox.TabIndex = 5;
             // 
-            // label2
+            // postsLabel
             // 
-            this.label2.Location = new System.Drawing.Point(6, 54);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(157, 19);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Posts are loaded at once";
+            this.postsLabel.Location = new System.Drawing.Point(6, 70);
+            this.postsLabel.Name = "postsLabel";
+            this.postsLabel.Size = new System.Drawing.Size(160, 20);
+            this.postsLabel.TabIndex = 3;
+            this.postsLabel.Text = "Posts are loaded at once";
             // 
-            // numericUpDown1
+            // postsNumericUpDown
             // 
-            this.numericUpDown1.Enabled = false;
-            this.numericUpDown1.Location = new System.Drawing.Point(172, 51);
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(48, 19);
-            this.numericUpDown1.TabIndex = 2;
+            this.postsNumericUpDown.Location = new System.Drawing.Point(172, 67);
+            this.postsNumericUpDown.Name = "postsNumericUpDown";
+            this.postsNumericUpDown.Size = new System.Drawing.Size(48, 23);
+            this.postsNumericUpDown.TabIndex = 2;
             // 
             // openLinkCheckBox
             // 
             this.openLinkCheckBox.Location = new System.Drawing.Point(8, 27);
             this.openLinkCheckBox.Name = "openLinkCheckBox";
-            this.openLinkCheckBox.Size = new System.Drawing.Size(200, 16);
+            this.openLinkCheckBox.Size = new System.Drawing.Size(216, 36);
             this.openLinkCheckBox.TabIndex = 1;
             this.openLinkCheckBox.Text = "Always confirm when open links";
             // 
-            // label1
+            // generalLabel
             // 
-            this.label1.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.label1.Location = new System.Drawing.Point(4, 4);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(216, 16);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Under Construction";
+            this.generalLabel.ForeColor = System.Drawing.SystemColors.ActiveCaption;
+            this.generalLabel.Location = new System.Drawing.Point(4, 4);
+            this.generalLabel.Name = "generalLabel";
+            this.generalLabel.Size = new System.Drawing.Size(216, 16);
+            this.generalLabel.TabIndex = 0;
+            this.generalLabel.Text = "General Settings";
             // 
             // tabNetworkPage
             // 
@@ -253,9 +252,9 @@
             this.tabNetworkPage.Controls.Add(this.useProxyRadioButton);
             this.tabNetworkPage.Controls.Add(this.noProxyRadioButton);
             this.tabNetworkPage.Controls.Add(this.useDefaultRadioButton);
-            this.tabNetworkPage.Location = new System.Drawing.Point(4, 21);
+            this.tabNetworkPage.Location = new System.Drawing.Point(4, 25);
             this.tabNetworkPage.Name = "tabNetworkPage";
-            this.tabNetworkPage.Size = new System.Drawing.Size(232, 243);
+            this.tabNetworkPage.Size = new System.Drawing.Size(232, 239);
             this.tabNetworkPage.TabIndex = 2;
             this.tabNetworkPage.Text = global::Tumblott.Messages.Network;
             // 
@@ -264,72 +263,72 @@
             this.proxyOnlyImagesCheckBox.Enabled = false;
             this.proxyOnlyImagesCheckBox.Location = new System.Drawing.Point(8, 23);
             this.proxyOnlyImagesCheckBox.Name = "proxyOnlyImagesCheckBox";
-            this.proxyOnlyImagesCheckBox.Size = new System.Drawing.Size(216, 28);
+            this.proxyOnlyImagesCheckBox.Size = new System.Drawing.Size(216, 36);
             this.proxyOnlyImagesCheckBox.TabIndex = 12;
             this.proxyOnlyImagesCheckBox.Text = "Use proxy only for loading images\r\n(Useful with an image compression proxy)";
             // 
             // proxyPasswordTextBox
             // 
-            this.proxyPasswordTextBox.Location = new System.Drawing.Point(86, 196);
+            this.proxyPasswordTextBox.Location = new System.Drawing.Point(86, 208);
             this.proxyPasswordTextBox.MaxLength = 1024;
             this.proxyPasswordTextBox.Name = "proxyPasswordTextBox";
             this.proxyPasswordTextBox.PasswordChar = '*';
-            this.proxyPasswordTextBox.Size = new System.Drawing.Size(138, 19);
+            this.proxyPasswordTextBox.Size = new System.Drawing.Size(138, 23);
             this.proxyPasswordTextBox.TabIndex = 11;
             // 
             // proxyPasswordLabel
             // 
-            this.proxyPasswordLabel.Location = new System.Drawing.Point(16, 199);
+            this.proxyPasswordLabel.Location = new System.Drawing.Point(8, 211);
             this.proxyPasswordLabel.Name = "proxyPasswordLabel";
-            this.proxyPasswordLabel.Size = new System.Drawing.Size(64, 16);
+            this.proxyPasswordLabel.Size = new System.Drawing.Size(72, 16);
             this.proxyPasswordLabel.TabIndex = 10;
             this.proxyPasswordLabel.Text = "Password";
             // 
             // proxyUsernameTextBox
             // 
-            this.proxyUsernameTextBox.Location = new System.Drawing.Point(86, 171);
+            this.proxyUsernameTextBox.Location = new System.Drawing.Point(86, 183);
             this.proxyUsernameTextBox.MaxLength = 1024;
             this.proxyUsernameTextBox.Name = "proxyUsernameTextBox";
-            this.proxyUsernameTextBox.Size = new System.Drawing.Size(138, 19);
+            this.proxyUsernameTextBox.Size = new System.Drawing.Size(138, 23);
             this.proxyUsernameTextBox.TabIndex = 9;
             // 
             // proxyUsernameLabel
             // 
-            this.proxyUsernameLabel.Location = new System.Drawing.Point(16, 174);
+            this.proxyUsernameLabel.Location = new System.Drawing.Point(8, 186);
             this.proxyUsernameLabel.Name = "proxyUsernameLabel";
-            this.proxyUsernameLabel.Size = new System.Drawing.Size(64, 16);
+            this.proxyUsernameLabel.Size = new System.Drawing.Size(72, 16);
             this.proxyUsernameLabel.TabIndex = 8;
             this.proxyUsernameLabel.Text = "Username";
             // 
             // proxyPortTextBox
             // 
-            this.proxyPortTextBox.Location = new System.Drawing.Point(86, 146);
+            this.proxyPortTextBox.Location = new System.Drawing.Point(86, 158);
             this.proxyPortTextBox.MaxLength = 5;
             this.proxyPortTextBox.Name = "proxyPortTextBox";
-            this.proxyPortTextBox.Size = new System.Drawing.Size(38, 19);
+            this.proxyPortTextBox.Size = new System.Drawing.Size(38, 23);
             this.proxyPortTextBox.TabIndex = 7;
             // 
             // proxyPortLabel
             // 
-            this.proxyPortLabel.Location = new System.Drawing.Point(16, 149);
+            this.proxyPortLabel.Location = new System.Drawing.Point(8, 161);
             this.proxyPortLabel.Name = "proxyPortLabel";
-            this.proxyPortLabel.Size = new System.Drawing.Size(64, 16);
+            this.proxyPortLabel.Size = new System.Drawing.Size(72, 16);
             this.proxyPortLabel.TabIndex = 6;
             this.proxyPortLabel.Text = "Port";
             // 
             // proxyServerTextBox
             // 
-            this.proxyServerTextBox.Location = new System.Drawing.Point(86, 121);
+            this.proxyServerTextBox.Location = new System.Drawing.Point(86, 133);
             this.proxyServerTextBox.MaxLength = 512;
             this.proxyServerTextBox.Name = "proxyServerTextBox";
-            this.proxyServerTextBox.Size = new System.Drawing.Size(138, 19);
+            this.proxyServerTextBox.Size = new System.Drawing.Size(138, 23);
             this.proxyServerTextBox.TabIndex = 5;
             // 
             // proxyServerLabel
             // 
-            this.proxyServerLabel.Location = new System.Drawing.Point(16, 124);
+            this.proxyServerLabel.Location = new System.Drawing.Point(8, 136);
             this.proxyServerLabel.Name = "proxyServerLabel";
-            this.proxyServerLabel.Size = new System.Drawing.Size(64, 16);
+            this.proxyServerLabel.Size = new System.Drawing.Size(72, 16);
             this.proxyServerLabel.TabIndex = 4;
             this.proxyServerLabel.Text = "Server";
             // 
@@ -344,18 +343,18 @@
             // 
             // useProxyRadioButton
             // 
-            this.useProxyRadioButton.Location = new System.Drawing.Point(8, 101);
+            this.useProxyRadioButton.Location = new System.Drawing.Point(8, 105);
             this.useProxyRadioButton.Name = "useProxyRadioButton";
-            this.useProxyRadioButton.Size = new System.Drawing.Size(200, 16);
+            this.useProxyRadioButton.Size = new System.Drawing.Size(200, 24);
             this.useProxyRadioButton.TabIndex = 3;
             this.useProxyRadioButton.Text = global::Tumblott.Messages.UseTheProxyBelow;
             this.useProxyRadioButton.CheckedChanged += new System.EventHandler(this.useProxyRadioButton_CheckedChanged);
             // 
             // noProxyRadioButton
             // 
-            this.noProxyRadioButton.Location = new System.Drawing.Point(8, 79);
+            this.noProxyRadioButton.Location = new System.Drawing.Point(8, 81);
             this.noProxyRadioButton.Name = "noProxyRadioButton";
-            this.noProxyRadioButton.Size = new System.Drawing.Size(200, 16);
+            this.noProxyRadioButton.Size = new System.Drawing.Size(200, 24);
             this.noProxyRadioButton.TabIndex = 2;
             this.noProxyRadioButton.Text = global::Tumblott.Messages.DoNotUseTheProxy;
             // 
@@ -364,7 +363,7 @@
             this.useDefaultRadioButton.Checked = true;
             this.useDefaultRadioButton.Location = new System.Drawing.Point(8, 57);
             this.useDefaultRadioButton.Name = "useDefaultRadioButton";
-            this.useDefaultRadioButton.Size = new System.Drawing.Size(200, 16);
+            this.useDefaultRadioButton.Size = new System.Drawing.Size(200, 24);
             this.useDefaultRadioButton.TabIndex = 1;
             this.useDefaultRadioButton.TabStop = true;
             this.useDefaultRadioButton.Text = global::Tumblott.Messages.UseDefaultSettings;
@@ -381,11 +380,19 @@
             this.tabAboutPage.Controls.Add(this.webLinkLabel);
             this.tabAboutPage.Controls.Add(this.versionLabel);
             this.tabAboutPage.Controls.Add(this.nameLabel);
-            this.tabAboutPage.Location = new System.Drawing.Point(4, 21);
+            this.tabAboutPage.Location = new System.Drawing.Point(4, 25);
             this.tabAboutPage.Name = "tabAboutPage";
-            this.tabAboutPage.Size = new System.Drawing.Size(232, 243);
+            this.tabAboutPage.Size = new System.Drawing.Size(232, 239);
             this.tabAboutPage.TabIndex = 1;
             this.tabAboutPage.Text = global::Tumblott.Messages.About;
+            // 
+            // debugCheckBox
+            // 
+            this.debugCheckBox.Location = new System.Drawing.Point(8, 178);
+            this.debugCheckBox.Name = "debugCheckBox";
+            this.debugCheckBox.Size = new System.Drawing.Size(200, 24);
+            this.debugCheckBox.TabIndex = 9;
+            this.debugCheckBox.Text = "Super Debug Mode RX";
             // 
             // licenseLinkLabel
             // 
@@ -408,7 +415,7 @@
             // 
             // debugButton
             // 
-            this.debugButton.Location = new System.Drawing.Point(74, 197);
+            this.debugButton.Location = new System.Drawing.Point(74, 209);
             this.debugButton.Name = "debugButton";
             this.debugButton.Size = new System.Drawing.Size(80, 24);
             this.debugButton.TabIndex = 6;
@@ -427,7 +434,7 @@
             // 
             this.copyrightLabel.Location = new System.Drawing.Point(8, 62);
             this.copyrightLabel.Name = "copyrightLabel";
-            this.copyrightLabel.Size = new System.Drawing.Size(216, 32);
+            this.copyrightLabel.Size = new System.Drawing.Size(216, 36);
             this.copyrightLabel.TabIndex = 2;
             this.copyrightLabel.Text = "Copyright here";
             // 
@@ -443,7 +450,7 @@
             // 
             // versionLabel
             // 
-            this.versionLabel.Location = new System.Drawing.Point(61, 28);
+            this.versionLabel.Location = new System.Drawing.Point(61, 30);
             this.versionLabel.Name = "versionLabel";
             this.versionLabel.Size = new System.Drawing.Size(163, 25);
             this.versionLabel.TabIndex = 1;
@@ -457,15 +464,6 @@
             this.nameLabel.TabIndex = 0;
             this.nameLabel.Text = "Tumblott";
             // 
-            // debugCheckBox
-            // 
-            this.debugCheckBox.Location = new System.Drawing.Point(8, 178);
-            this.debugCheckBox.Name = "debugCheckBox";
-            this.debugCheckBox.Size = new System.Drawing.Size(200, 16);
-            this.debugCheckBox.TabIndex = 9;
-            this.debugCheckBox.Text = "Super Debug Mode RX";
-            //this.debugCheckBox.UseVisualStyleBackColor = true;
-            // 
             // SettingsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -474,16 +472,15 @@
             this.ClientSize = new System.Drawing.Size(240, 268);
             this.Controls.Add(this.tabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimizeBox = false;
             this.Name = "SettingsForm";
-            this.Text = "Settings";
+            this.Text = "Settings - Tumblott";
             this.Load += new System.EventHandler(this.SettingsForm_Load);
             this.tabControl.ResumeLayout(false);
             this.tabAccountPage.ResumeLayout(false);
             //this.tabAccountPage.PerformLayout();
             this.tabGeneralPage.ResumeLayout(false);
-            //((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            //((System.ComponentModel.ISupportInitialize)(this.postsNumericUpDown)).EndInit();
             this.tabNetworkPage.ResumeLayout(false);
             //this.tabNetworkPage.PerformLayout();
             this.tabAboutPage.ResumeLayout(false);
@@ -501,7 +498,7 @@
         private System.Windows.Forms.Label nameLabel;
         private System.Windows.Forms.Label copyrightLabel;
         private System.Windows.Forms.LinkLabel webLinkLabel;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label generalLabel;
         private System.Windows.Forms.Label licenseLabel;
         private System.Windows.Forms.TabPage tabNetworkPage;
         private System.Windows.Forms.RadioButton useProxyRadioButton;
@@ -526,8 +523,8 @@
         private System.Windows.Forms.CheckBox openLinkCheckBox;
         private System.Windows.Forms.PictureBox iconPictureBox;
         private System.Windows.Forms.CheckBox proxyOnlyImagesCheckBox;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.Label postsLabel;
+        private System.Windows.Forms.NumericUpDown postsNumericUpDown;
         private System.Windows.Forms.ComboBox thumbImageSizeComboBox;
         private System.Windows.Forms.Label thumbImageSizeLabel;
         private System.Windows.Forms.LinkLabel licenseLinkLabel;
