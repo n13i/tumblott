@@ -1,0 +1,56 @@
+[Version]
+Signature = "$Windows NT$"
+Provider = "m2hq.net"
+CESignature = "$Windows CE$"
+
+[CEStrings]
+AppName = "Tumblott"
+InstallDir = "%CE1%\%AppName%"
+
+[Strings]
+Manufacturer = "m2hq.net"
+
+[CEDevice]
+VersionMin = 4.0
+VersionMax = 9.99
+BuildMax = 0xE0000000
+
+[DefaultInstall]
+CopyFiles = Files.Common,Files.PNGIcon,Files.Icon,Files.ResJaJP,Files.AppToDate
+
+[SourceDisksNames]
+1 = ,"Common files",,"Tumblott\bin\Release"
+2 = ,"PNG Icon files",,"Tumblott\Resources"
+3 = ,"Icon files",,"Tumblott"
+4 = ,"Resource files (ja-JP)",,"Tumblott\bin\Release\ja-JP"
+5 = ,"AppToDate files",,"."
+
+[SourceDisksFiles]
+"%AppName%.exe" = 1
+"tumblott_icon.png" = 2
+"tumblott-icon.ico" = 3
+"%AppName%.resources.dll" = 4
+"AppToDate.xml" = 5
+
+[DestinationDirs]
+Files.Common = 0,"%InstallDir%"
+Files.PNGIcon = 0,"%InstallDir%"
+Files.Icon = 0,"%InstallDir%"
+Files.ResJaJP = 0,"%InstallDir%\ja-JP"
+Files.AppToDate = 0,"%InstallDir%"
+
+[Files.Common]
+"%AppName%.exe",,,0
+
+[Files.PNGIcon]
+"%AppName%.png","tumblott_icon.png",,0
+
+[Files.Icon]
+"%AppName%.ico","tumblott-icon.ico",,0
+
+[Files.ResJaJP]
+"%AppName%.resources.dll",,,0
+
+[Files.AppToDate]
+"%AppName%.xml","AppToDate.xml",,0
+

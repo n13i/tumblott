@@ -1,0 +1,23 @@
+<!-- begin postxml -->
+<!-- Shortcut -->
+<characteristic type="FileOperation">
+  <characteristic type="%CE11%" translation="install">
+    <characteristic type="MakeDir" />
+    <characteristic type="Tumblott.lnk" translation="install">
+      <characteristic type="Shortcut">
+        <parm name="Source" value="%InstallDir%\Tumblott.exe" translation="install" />
+      </characteristic>
+    </characteristic>
+  </characteristic>
+</characteristic>
+<characteristic type="Registry">
+  <!-- Support for AppToDate -->
+  <characteristic type="HKCU\Software\MoDaCo\AppToDate\XML" translation="install">
+    <parm name="Tumblott" value="%InstallDir%\Tumblott.xml" datatype="string" translation="install" />
+  </characteristic>
+  <!-- WM6.5 Startmenu icon -->
+  <characteristic type="HKLM\Security\Shell\StartInfo\Start\Tumblott.lnk" translation="install">
+    <parm name="Icon" value="%InstallDir%\Tumblott.png" datatype="string" translation="install" />
+  </characteristic>
+</characteristic>
+<!-- end postxml -->

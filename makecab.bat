@@ -20,11 +20,11 @@ if "%ProgramFiles(x86)%" == "" (
 	set progfiles="%ProgramFiles(x86)%"
 )
 
-cd "%progfiles%\Windows CE Tools\wce420\POCKET PC 2003\Tools"
-Cabwiz.exe "%currentpath%Tumblott.inf"
+cd "%userprofile%\Program Files\Local\QuickCab"
+Cabwiz.exe "%currentpath%CabWiz.inf" /postxml "%currentpath%CabWiz.xml"
 
 cd %currentpath%
-ren Tumblott.CAB %outfilename%
+ren CabWiz.CAB %outfilename%
 
 pause
 

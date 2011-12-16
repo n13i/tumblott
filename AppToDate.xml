@@ -1,0 +1,7 @@
+<application>
+<name>Tumblott</name>
+<version>0.59.0.95</version>
+<description><b>Tumblott</b><br /><br />An unofficial Tumblr browser.<br />http://tumblott.m2hq.net/</description>
+<versionurl>http://labs.m2hq.net/dist/Tumblott/AppToDate.xml</versionurl>
+<caburl>http://labs.m2hq.net/dist/Tumblott/Tumblott_latest.CAB</caburl>
+</application>
